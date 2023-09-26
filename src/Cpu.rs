@@ -46,11 +46,22 @@ impl Cpu {
                     // BRK
                     Opcode::new( 0x00, String::from("BRK"), 1, 7, AddressingMode::NoneAddressing),
 
-                    // INX
-                    Opcode::new( 0xE8, String::from("INX"), 1, 2, AddressingMode::NoneAddressing),
+                    // Decrements & Increments
+                    Opcode::new(0xE6, String::from("INC"), 2, 5, AddressingMode::ZeroPage),
+                    Opcode::new(0xF6, String::from("INC"), 2, 6, AddressingMode::ZeroPage_X),
+                    Opcode::new(0xEE, String::from("INC"), 3, 6, AddressingMode::Absolute),
+                    Opcode::new(0xFE, String::from("INC"), 3, 7, AddressingMode::Absolute_X),
 
-                    // INY
+                    Opcode::new(0xC6, String::from("DEC"), 2, 5, AddressingMode::ZeroPage),
+                    Opcode::new(0xD6, String::from("DEC"), 2, 6, AddressingMode::ZeroPage_X),
+                    Opcode::new(0xCE, String::from("DEC"), 3, 6, AddressingMode::Absolute),
+                    Opcode::new(0xDE, String::from("DEC"), 3, 7, AddressingMode::Absolute_X),
+
+                    Opcode::new( 0xE8, String::from("INX"), 1, 2, AddressingMode::NoneAddressing),
                     Opcode::new( 0xC8, String::from("INY"), 1, 2, AddressingMode::NoneAddressing),
+
+                    Opcode::new( 0xCA, String::from("DEX"), 1, 2, AddressingMode::NoneAddressing),
+                    Opcode::new( 0x88, String::from("DEY"), 1, 2, AddressingMode::NoneAddressing),
 
                     // Transfer Instructions
                     Opcode::new(0xA9, String::from("LDA"), 2, 2, AddressingMode::Immediate),
@@ -112,44 +123,12 @@ impl Cpu {
                     Opcode::new(0x38, String::from("SEC"), 1, 2, AddressingMode::NoneAddressing),
                     Opcode::new(0xF8, String::from("SED"), 1, 2, AddressingMode::NoneAddressing),
                     Opcode::new(0x78, String::from("SEI"), 1, 2, AddressingMode::NoneAddressing),
+
+                    // Logical Operations
+                    
                 ]
             },
         }
-    }
-
-    pub fn mem_read(&self, addr: u16) -> u8 {
-        self.memory[addr as usize]
-    }
-
-    pub fn mem_read_16(&self, addr: u16) -> u16 {
-        let lo = self.mem_read(addr) as u16;
-        let hi = self.mem_read(addr + 1) as u16;
-        (hi << 8) | (lo as u16)
-    }
-
-    pub fn mem_write_16(&mut self, addr: u16, val: u16) {
-        let hi = (val >> 8) as u8;
-        let lo = (val & 0xff) as u8;
-        self.mem_write(addr, lo);
-        self.mem_write(addr + 1, hi);
-    }
-
-    pub fn mem_write(&mut self, addr: u16, val: u8) {
-        self.memory[addr as usize] = val;
-    }
-
-    pub fn load(&mut self, program: &Vec<u8>) {
-        self.memory[0x8000..(0x8000 + program.len())].copy_from_slice(&program[..]);
-        self.mem_write_16(0xFFFC, 0x8000);
-    }
-
-    pub fn reset(&mut self) {
-        self.register_a = 0;
-        self.register_x = 0;
-        self.register_y = 0;
-        self.register_s = 0xFF;
-        self.status = 0;
-        self.pc = self.mem_read_16(0xFFFC);
     }
 
     pub fn run(&mut self) {
@@ -190,8 +169,15 @@ impl Cpu {
                 0x68 => self.pla(),
                 0x28 => self.plp(),
 
-                // INX
+                // Decrements & Increments
                 0xE8 => self.inx(),
+                0xC8 => self.iny(),
+                0xCA => self.dex(),
+                0x88 => self.dey(),
+                0xE6 | 0xF6 | 0xEE | 0xFE => self.inc(opcode.mode),
+                0xC6 | 0xD6 | 0xCE | 0xDE => self.dec(opcode.mode),
+
+                // Logical Operations
 
                 // STA
                 0x85 | 0x95 | 0x8D | 0x9D | 0x99 | 0x81 | 0x91 => self.sta(opcode.mode),
@@ -211,6 +197,41 @@ impl Cpu {
                 }
             }
         }
+    }
+
+    pub fn mem_read(&self, addr: u16) -> u8 {
+        self.memory[addr as usize]
+    }
+
+    pub fn mem_read_16(&self, addr: u16) -> u16 {
+        let lo = self.mem_read(addr) as u16;
+        let hi = self.mem_read(addr + 1) as u16;
+        (hi << 8) | (lo as u16)
+    }
+
+    pub fn mem_write_16(&mut self, addr: u16, val: u16) {
+        let hi = (val >> 8) as u8;
+        let lo = (val & 0xff) as u8;
+        self.mem_write(addr, lo);
+        self.mem_write(addr + 1, hi);
+    }
+
+    pub fn mem_write(&mut self, addr: u16, val: u8) {
+        self.memory[addr as usize] = val;
+    }
+
+    pub fn load(&mut self, program: &Vec<u8>) {
+        self.memory[0x8000..(0x8000 + program.len())].copy_from_slice(&program[..]);
+        self.mem_write_16(0xFFFC, 0x8000);
+    }
+
+    pub fn reset(&mut self) {
+        self.register_a = 0;
+        self.register_x = 0;
+        self.register_y = 0;
+        self.register_s = 0xFF;
+        self.status = 0;
+        self.pc = self.mem_read_16(0xFFFC);
     }
 
     pub fn load_and_run(&mut self, program: &Vec<u8>) {
@@ -450,7 +471,7 @@ impl Cpu {
         self.st_reg("y", mode);
     }
 
-    /// ************** INC instructions **************
+    /// ************** Decrements & IncrementsC instructions **************
     ///
     pub fn inc_reg(&mut self, reg: &str) {
         let reg = match reg {
@@ -473,8 +494,12 @@ impl Cpu {
         self.set_flag("N", reg.bit(7));
     }
 
-    pub fn ina(&mut self) {
-        self.inc_reg("a");
+    pub fn inc(&mut self, mode: AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let val = self.mem_read(addr).wrapping_add(1);
+        self.mem_write(addr, val);
+        self.set_flag("Z", val == 0);
+        self.set_flag("N", val.bit(7));
     }
 
     pub fn inx(&mut self) {
@@ -483,6 +508,43 @@ impl Cpu {
 
     pub fn iny(&mut self) {
         self.inc_reg("y");
+    }
+
+    pub fn dec_reg(&mut self, reg: &str) {
+        let reg = match reg {
+            "a" => {
+                self.register_a = self.register_a.wrapping_sub(1);
+                self.register_a
+            }
+            "x" => {
+                self.register_x = self.register_x.wrapping_sub(1);
+                self.register_x
+            }
+            "y" => {
+                self.register_y = self.register_y.wrapping_sub(1);
+                self.register_y
+            }
+            _ => panic!("Unknown Register: {}", reg),
+        };
+
+        self.set_flag("Z", reg == 0);
+        self.set_flag("N", reg.bit(7));
+    }
+
+    pub fn dec(&mut self, mode: AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let val = self.mem_read(addr).wrapping_sub(1);
+        self.mem_write(addr, val);
+        self.set_flag("Z", val == 0);
+        self.set_flag("N", val.bit(7));
+    }
+
+    pub fn dex(&mut self) {
+        self.dec_reg("x");
+    }
+
+    pub fn dey(&mut self) {
+        self.dec_reg("y");
     }
 
     /// ************** Status Flags instructions **************
