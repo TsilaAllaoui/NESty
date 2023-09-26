@@ -1,59 +1,12 @@
-use core::fmt;
-use std::rc::Rc;
-
+use crate::opcode::Opcode;
 use bit::BitIndex;
-
-#[derive(Clone)]
-pub struct Opcode {
-    code: u8,
-    name: String,
-    bytes: u8,
-    cycles: u8,
-    mode: AddressingMode,
-}
-
-impl Opcode {
-    pub fn new(code: u8, name: String, bytes: u8, cycles: u8, mode: AddressingMode) -> Self {
-        Opcode {
-            code,
-            name,
-            bytes,
-            cycles,
-            mode,
-        }
-    }
-}
-
-impl fmt::Debug for Opcode {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "Code: {}\nName: {}\nBytes: {}\nCycles: {}\nMode: {}",
-            self.code,
-            self.name,
-            self.bytes,
-            self.cycles,
-            match self.mode {
-                AddressingMode::Immediate => "IMM",
-                AddressingMode::ZeroPage => "ZP",
-                AddressingMode::ZeroPage_X => "ZPX",
-                AddressingMode::ZeroPage_Y => "ZPY",
-                AddressingMode::Absolute => "A",
-                AddressingMode::Absolute_X => "AX",
-                AddressingMode::Absolute_Y => "AY",
-                AddressingMode::Indirect_X => "IX",
-                AddressingMode::Indirect_Y => "IY",
-                AddressingMode::NoneAddressing => "IMP",
-            }
-        )
-    }
-}
 
 #[derive(Debug)]
 pub struct Cpu {
     pub register_a: u8,
     pub register_x: u8,
     pub register_y: u8,
+    pub register_s: u8,
     pub status: u8,
     pub pc: u16,
     pub opcodes: Vec<Opcode>,
@@ -82,6 +35,7 @@ impl Cpu {
             register_a: 0,
             register_x: 0,
             register_y: 0,
+            register_s: 0,
             status: 0,
             pc: 0,
             cycles: 0,
@@ -92,19 +46,13 @@ impl Cpu {
                     // BRK
                     Opcode::new( 0x00, String::from("BRK"), 1, 7, AddressingMode::NoneAddressing),
 
-                    // TAX
-                    Opcode::new( 0xAA, String::from("TAX"), 1, 2, AddressingMode::NoneAddressing),
-
-                    //TAY
-                    Opcode::new( 0xA8, String::from("TAY"), 1, 2, AddressingMode::NoneAddressing),
-
                     // INX
                     Opcode::new( 0xE8, String::from("INX"), 1, 2, AddressingMode::NoneAddressing),
 
                     // INY
                     Opcode::new( 0xC8, String::from("INY"), 1, 2, AddressingMode::NoneAddressing),
 
-                    // LDA
+                    // Transfer Instructions
                     Opcode::new(0xA9, String::from("LDA"), 2, 2, AddressingMode::Immediate),
                     Opcode::new(0xA5, String::from("LDA"), 2, 3, AddressingMode::ZeroPage),
                     Opcode::new(0xB5, String::from("LDA"), 2, 4, AddressingMode::ZeroPage_X),
@@ -114,21 +62,18 @@ impl Cpu {
                     Opcode::new(0xA1, String::from("LDA"), 2, 6, AddressingMode::Indirect_X),
                     Opcode::new(0xB1, String::from("LDA"), 2, 5, AddressingMode::Indirect_Y),
 
-                    // LDX
                     Opcode::new(0xA2, String::from("LDX"), 2, 2, AddressingMode::Immediate),
                     Opcode::new(0xA6, String::from("LDX"), 2, 3, AddressingMode::ZeroPage),
                     Opcode::new(0xB6, String::from("LDX"), 2, 4, AddressingMode::ZeroPage_Y),
                     Opcode::new(0xAE, String::from("LDX"), 3, 4, AddressingMode::Absolute),
                     Opcode::new(0xBE, String::from("LDX"), 3, 4, AddressingMode::Absolute_Y),
 
-                    // LDY
                     Opcode::new(0xA0, String::from("LDY"), 2, 2, AddressingMode::Immediate),
                     Opcode::new(0xA4, String::from("LDY"), 2, 3, AddressingMode::ZeroPage),
                     Opcode::new(0xB4, String::from("LDY"), 2, 4, AddressingMode::ZeroPage_X),
                     Opcode::new(0xAC, String::from("LDY"), 3, 4, AddressingMode::Absolute),
                     Opcode::new(0xBC, String::from("LDY"), 3, 4, AddressingMode::Absolute_X),
 
-                    // STA
                     Opcode::new(0x85, String::from("STA"), 2, 3, AddressingMode::ZeroPage),
                     Opcode::new(0x95, String::from("STA"), 2, 4, AddressingMode::ZeroPage_X),
                     Opcode::new(0x8D, String::from("STA"), 3, 4, AddressingMode::Absolute),
@@ -136,21 +81,40 @@ impl Cpu {
                     Opcode::new(0x99, String::from("STA"), 3, 5, AddressingMode::Absolute_Y),
                     Opcode::new(0x81, String::from("STA"), 2, 6, AddressingMode::Indirect_X),
                     Opcode::new(0x91, String::from("STA"), 2, 6, AddressingMode::Indirect_Y),
+
+                    Opcode::new(0x86, String::from("STX"), 2, 3, AddressingMode::ZeroPage),
+                    Opcode::new(0x96, String::from("STX"), 2, 4, AddressingMode::ZeroPage_Y),
+                    Opcode::new(0x8E, String::from("STX"), 3, 4, AddressingMode::Absolute),
+
+                    Opcode::new(0x84, String::from("STY"), 2, 3, AddressingMode::ZeroPage),
+                    Opcode::new(0x94, String::from("STY"), 2, 4, AddressingMode::ZeroPage_X),
+                    Opcode::new(0x8C, String::from("STY"), 3, 4, AddressingMode::Absolute),
+
+                    Opcode::new( 0xAA, String::from("TAX"), 1, 2, AddressingMode::NoneAddressing),
+                    Opcode::new( 0xA8, String::from("TAY"), 1, 2, AddressingMode::NoneAddressing),
+                    Opcode::new( 0xBA, String::from("TSX"), 1, 2, AddressingMode::NoneAddressing),
+
+                    Opcode::new( 0x8A, String::from("TXA"), 1, 2, AddressingMode::NoneAddressing),
+                    Opcode::new( 0x9A, String::from("TXS"), 1, 2, AddressingMode::NoneAddressing),
+                    Opcode::new( 0x98, String::from("TYA"), 1, 2, AddressingMode::NoneAddressing),
+
+                    // Stack Instructions
+                    Opcode::new( 0x48, String::from("PHA"), 1, 3, AddressingMode::NoneAddressing),
+                    Opcode::new( 0x08, String::from("PHP"), 1, 3, AddressingMode::NoneAddressing),
+                    Opcode::new( 0x68, String::from("PLA"), 1, 4, AddressingMode::NoneAddressing),
+                    Opcode::new( 0x28, String::from("PLP"), 1, 4, AddressingMode::NoneAddressing),
+
+                    // Status flags instructions
+                    Opcode::new(0x18, String::from("CLC"), 1, 2, AddressingMode::NoneAddressing),
+                    Opcode::new(0xD8, String::from("CLD"), 1, 2, AddressingMode::NoneAddressing),
+                    Opcode::new(0x58, String::from("CLI"), 1, 2, AddressingMode::NoneAddressing),
+                    Opcode::new(0xB8, String::from("CLV"), 1, 2, AddressingMode::NoneAddressing),
+                    Opcode::new(0x38, String::from("SEC"), 1, 2, AddressingMode::NoneAddressing),
+                    Opcode::new(0xF8, String::from("SED"), 1, 2, AddressingMode::NoneAddressing),
+                    Opcode::new(0x78, String::from("SEI"), 1, 2, AddressingMode::NoneAddressing),
                 ]
             },
         }
-    }
-
-    pub fn set_z_flag(&mut self, val: bool) {
-        self.status.set_bit(1, val);
-    }
-
-    pub fn set_neg_flag(&mut self, val: bool) {
-        self.status.set_bit(7, val);
-    }
-
-    pub fn get_bit_at(self, i: u32) -> bool {
-        self.status.bit(i as usize)
     }
 
     pub fn mem_read(&self, addr: u16) -> u8 {
@@ -183,6 +147,7 @@ impl Cpu {
         self.register_a = 0;
         self.register_x = 0;
         self.register_y = 0;
+        self.register_s = 0xFF;
         self.status = 0;
         self.pc = self.mem_read_16(0xFFFC);
     }
@@ -206,20 +171,39 @@ impl Cpu {
                     break;
                 }
 
-                // TAX
+                // Transfer Instructions
                 0xAA => self.tax(),
-
-                //     // INX
-                0xE8 => self.inx(),
-
-                // LDX
-                0xA2 | 0xA6 | 0xB6 | 0xAE | 0xBE => self.ldx(opcode.mode),
-
-                // LDA
+                0xA8 => self.tay(),
+                0xBA => self.tsx(),
                 0xA9 | 0xA5 | 0xB5 | 0xAD | 0xBD | 0xB9 | 0xA1 | 0xB1 => self.lda(opcode.mode),
+                0xA2 | 0xA6 | 0xB6 | 0xAE | 0xBE => self.ldx(opcode.mode),
+                0xA0 | 0xA4 | 0xB4 | 0xAC | 0xBC => self.ldy(opcode.mode),
+                0x86 | 0x96 | 0x8E => self.stx(opcode.mode),
+                0x84 | 0x94 | 0x8C => self.sty(opcode.mode),
+                0x8A => self.txa(),
+                0x9A => self.txs(),
+                0x98 => self.tya(),
+
+                // Stack Instructions
+                0x48 => self.pha(),
+                0x08 => self.php(),
+                0x68 => self.pla(),
+                0x28 => self.plp(),
+
+                // INX
+                0xE8 => self.inx(),
 
                 // STA
                 0x85 | 0x95 | 0x8D | 0x9D | 0x99 | 0x81 | 0x91 => self.sta(opcode.mode),
+
+                // Status flags instructions
+                0x18 => self.clear_carry_flag(),
+                0xD8 => self.clear_decimal_flag(),
+                0x58 => self.clear_interrupt_flag(),
+                0xB8 => self.clear_overflow_flag(),
+                0x38 => self.set_carry_flag(),
+                0xF8 => self.set_decimal_flag(),
+                0x78 => self.set_interrupt_flag(),
 
                 _ => {
                     self.brk();
@@ -316,15 +300,56 @@ impl Cpu {
         }
     }
 
+    pub fn set_flag(&mut self, flag: &str, val: bool) {
+        match flag {
+            "C" => {
+                self.status.set_bit(0, val);
+            }
+            "Z" => {
+                self.status.set_bit(1, val);
+            }
+            "I" => {
+                self.status.set_bit(2, val);
+            }
+            "D" => {
+                self.status.set_bit(3, val);
+            }
+            "B" => {
+                self.status.set_bit(4, val);
+            }
+            "V" => {
+                self.status.set_bit(6, val);
+            }
+            "N" => {
+                self.status.set_bit(7, val);
+            }
+            _ => {
+                panic!("Flag {} is unknown", flag);
+            }
+        }
+    }
+
+    pub fn get_flag(&mut self, flag: &str) -> bool {
+        match flag {
+            "C" => self.status.bit(0),
+            "Z" => self.status.bit(1),
+            "I" => self.status.bit(2),
+            "D" => self.status.bit(3),
+            "B" => self.status.bit(4),
+            "V" => self.status.bit(6),
+            "N" => self.status.bit(7),
+            _ => false,
+        }
+    }
+
     /// ************** BRK instructions **************
     ///
     pub fn brk(&mut self) {
         self.status.set_bit(2, true);
-        self.cycles += 7;
         return;
     }
 
-    /// ************** LD instructions **************
+    /// ************** Transfer instructions **************
     ///
     pub fn ld_reg(&mut self, reg: &str, mode: AddressingMode) {
         let addr = self.get_operand_address(mode);
@@ -344,8 +369,8 @@ impl Cpu {
             _ => panic!("Unknown Register: {}", reg),
         };
 
-        self.set_z_flag(reg == 0);
-        self.set_neg_flag(reg.bit(7));
+        self.set_flag("Z", reg == 0);
+        self.set_flag("N", reg.bit(7));
     }
 
     pub fn lda(&mut self, mode: AddressingMode) {
@@ -360,60 +385,40 @@ impl Cpu {
         self.ld_reg("y", mode);
     }
 
-    /// ************** TAX instruction **************
-    ///
     pub fn tax(&mut self) {
         self.register_x = self.register_a;
-        self.set_z_flag(self.register_x == 0);
-        self.set_neg_flag(self.register_x.bit(7));
-        self.cycles += 2;
+        self.set_flag("Z", self.register_x == 0);
+        self.set_flag("N", self.register_x.bit(7));
     }
 
-    /// ************** TAY instruction **************
-    ///
     pub fn tay(&mut self) {
         self.register_y = self.register_a;
-        self.set_z_flag(self.register_y == 0);
-        self.set_neg_flag(self.register_y.bit(7));
-        self.cycles += 2;
+        self.set_flag("Z", self.register_y == 0);
+        self.set_flag("N", self.register_y.bit(7));
     }
 
-    /// ************** INC instructions **************
-    ///
-    pub fn inc_reg(&mut self, reg: &str) {
-        let reg = match reg {
-            "a" => {
-                self.register_a = self.register_a.wrapping_add(1);
-                self.register_a
-            }
-            "x" => {
-                self.register_x = self.register_x.wrapping_add(1);
-                self.register_x
-            }
-            "y" => {
-                self.register_y = self.register_y.wrapping_add(1);
-                self.register_y
-            }
-            _ => panic!("Unknown Register: {}", reg),
-        };
-        self.set_z_flag(reg == 0);
-        self.set_neg_flag(reg.bit(7));
+    pub fn tsx(&mut self) {
+        self.register_x = self.mem_read(self.register_s as u16);
+        self.set_flag("Z", self.register_x == 0);
+        self.set_flag("N", self.register_x.bit(7));
     }
 
-    pub fn ina(&mut self) {
-        self.inc_reg("a");
+    pub fn txa(&mut self) {
+        self.register_a = self.register_x;
+        self.set_flag("Z", self.register_a == 0);
+        self.set_flag("N", self.register_a.bit(7));
     }
 
-    pub fn inx(&mut self) {
-        self.inc_reg("x");
+    pub fn txs(&mut self) {
+        self.register_s = self.register_x;
     }
 
-    pub fn iny(&mut self) {
-        self.inc_reg("y");
+    pub fn tya(&mut self) {
+        self.register_a = self.register_y;
+        self.set_flag("Z", self.register_a == 0);
+        self.set_flag("N", self.register_a.bit(7));
     }
 
-    /// ************** ST instructions **************
-    ///
     pub fn st_reg(&mut self, reg: &str, mode: AddressingMode) {
         let addr = self.get_operand_address(mode);
         match reg {
@@ -443,5 +448,101 @@ impl Cpu {
 
     pub fn sty(&mut self, mode: AddressingMode) {
         self.st_reg("y", mode);
+    }
+
+    /// ************** INC instructions **************
+    ///
+    pub fn inc_reg(&mut self, reg: &str) {
+        let reg = match reg {
+            "a" => {
+                self.register_a = self.register_a.wrapping_add(1);
+                self.register_a
+            }
+            "x" => {
+                self.register_x = self.register_x.wrapping_add(1);
+                self.register_x
+            }
+            "y" => {
+                self.register_y = self.register_y.wrapping_add(1);
+                self.register_y
+            }
+            _ => panic!("Unknown Register: {}", reg),
+        };
+
+        self.set_flag("Z", reg == 0);
+        self.set_flag("N", reg.bit(7));
+    }
+
+    pub fn ina(&mut self) {
+        self.inc_reg("a");
+    }
+
+    pub fn inx(&mut self) {
+        self.inc_reg("x");
+    }
+
+    pub fn iny(&mut self) {
+        self.inc_reg("y");
+    }
+
+    /// ************** Status Flags instructions **************
+    ///
+    pub fn clear_carry_flag(&mut self) {
+        self.set_flag("C", false);
+    }
+
+    pub fn set_carry_flag(&mut self) {
+        self.set_flag("C", true);
+    }
+
+    pub fn clear_decimal_flag(&mut self) {
+        self.set_flag("D", false);
+    }
+
+    pub fn set_decimal_flag(&mut self) {
+        self.set_flag("D", true);
+    }
+
+    pub fn clear_interrupt_flag(&mut self) {
+        self.set_flag("I", false);
+    }
+
+    pub fn set_interrupt_flag(&mut self) {
+        self.set_flag("I", true);
+    }
+
+    pub fn clear_overflow_flag(&mut self) {
+        self.set_flag("V", false);
+    }
+
+    /// ************** Stacks instructions **************
+    ///
+    pub fn push(&mut self, val: u8) {
+        self.mem_write(self.register_s as u16, val);
+        self.register_s -= 1;
+    }
+
+    pub fn pull(&mut self) -> u8 {
+        let val = self.mem_read(self.register_s as u16);
+        self.register_s += 1;
+        val
+    }
+
+    pub fn pha(&mut self) {
+        self.push(self.register_a);
+    }
+
+    pub fn php(&mut self) {
+        self.push(self.status);
+    }
+
+    pub fn pla(&mut self) {
+        self.register_a = self.pull();
+        self.set_flag("Z", self.register_a == 0);
+        self.set_flag("N", self.register_a.bit(7));
+    }
+
+    pub fn plp(&mut self) {
+        self.status = self.pull();
     }
 }
