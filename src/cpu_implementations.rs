@@ -532,4 +532,14 @@ impl Cpu {
         self.set_flag("Z", val == 0);
         self.set_flag("N", val.bit(7));
     }
+
+    /// ************** Comparisons Instructions **************
+    ///
+    pub fn cmp(&mut self, mode: AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let val = self.mem_read(addr);
+        if self.register_a >= val {
+            self.set_flag("Z", true);
+        }
+    }
 }

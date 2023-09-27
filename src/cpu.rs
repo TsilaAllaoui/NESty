@@ -175,6 +175,16 @@ impl Cpu {
                     Opcode::new(0x76, String::from("ROR"), 2, 6, AddressingMode::ZeroPage_X),
                     Opcode::new(0x6E, String::from("ROR"), 3, 6, AddressingMode::Absolute),
                     Opcode::new(0x7E, String::from("ROR"), 3, 7, AddressingMode::Absolute_X),
+
+                    // Comparisons instructions
+                    Opcode::new(0xC9, String::from("CMP"), 2, 2, AddressingMode::Immediate),
+                    Opcode::new(0xC5, String::from("CMP"), 2, 3, AddressingMode::ZeroPage),
+                    Opcode::new(0xD5, String::from("CMP"), 2, 4, AddressingMode::ZeroPage_X),
+                    Opcode::new(0xCD, String::from("CMP"), 3, 4, AddressingMode::Absolute),
+                    Opcode::new(0xDD, String::from("CMP"), 3, 4, AddressingMode::Absolute_X),
+                    Opcode::new(0xD9, String::from("CMP"), 3, 4, AddressingMode::Absolute_Y),
+                    Opcode::new(0xC1, String::from("CMP"), 2, 6, AddressingMode::Indirect_X),
+                    Opcode::new(0xD1, String::from("CMP"), 2, 5, AddressingMode::Indirect_Y),
                 ]
             },
         }
@@ -234,7 +244,7 @@ impl Cpu {
                 // STA
                 0x85 | 0x95 | 0x8D | 0x9D | 0x99 | 0x81 | 0x91 => self.sta(opcode.mode),
 
-                // Status flags instructions
+                // Status flags Instructions
                 0x18 => self.clear_carry_flag(),
                 0xD8 => self.clear_decimal_flag(),
                 0x58 => self.clear_interrupt_flag(),
@@ -248,6 +258,9 @@ impl Cpu {
                 0x4A | 0x46 | 0x56 | 0x4E | 0x5E => self.lsr(opcode.mode),
                 0x2A | 0x26 | 0x36 | 0x2E | 0x3E => self.rol(opcode.mode),
                 0x6A | 0x66 | 0x76 | 0x6E | 0x7E => self.ror(opcode.mode),
+
+                // Comparisons Instructions
+                0xC9 | 0xC5 | 0xD5 | 0xCD | 0xDD | 0xD9 | 0xC1 | 0xD1 => self.cmp(opcode.mode),
 
                 _ => {
                     self.brk();
