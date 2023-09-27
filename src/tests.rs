@@ -39,3 +39,21 @@ fn test_asl() {
     assert_eq!(cpu.register_a, 0x80);
     assert_eq!(cpu.status, 0x85);
 }
+
+#[test]
+fn test_bcc() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x18, 0x90, 0x02, 0x00]);
+    cpu.pc = 0x8000;
+    cpu.run();
+    assert_eq!(cpu.pc, 0x8006);
+}
+
+#[test]
+fn test_bcc_backward_jump() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x00, 0x18, 0x90, 0xFC, 0x00]);
+    cpu.pc = 0x8001;
+    cpu.run();
+    assert_eq!(cpu.pc, 0x8001);
+}

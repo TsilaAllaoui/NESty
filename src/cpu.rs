@@ -193,6 +193,10 @@ impl Cpu {
                     Opcode::new(0xC0, String::from("CPY"), 2, 2, AddressingMode::Immediate),
                     Opcode::new(0xC4, String::from("CPY"), 2, 3, AddressingMode::ZeroPage),
                     Opcode::new(0xCC, String::from("CPY"), 3, 4, AddressingMode::Absolute),
+
+                    // Conditional Branch Instructions
+                    Opcode::new(0x90, String::from("BCC"), 2, 2, AddressingMode::NoneAddressing),
+                
                 ]
             },
         }
@@ -271,6 +275,9 @@ impl Cpu {
                 0xC9 | 0xC5 | 0xD5 | 0xCD | 0xDD | 0xD9 | 0xC1 | 0xD1 => self.cmp(opcode.mode),
                 0xE0 | 0xE4 | 0xEC => self.cpx(opcode.mode),
                 0xC0 | 0xC4 | 0xCC => self.cpy(opcode.mode),
+
+                // Conditional Branch Instructions
+                0x90 => self.bcc(),
 
                 _ => {
                     self.brk();

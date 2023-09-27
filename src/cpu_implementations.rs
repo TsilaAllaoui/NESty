@@ -535,7 +535,7 @@ impl Cpu {
 
     /// ************** Comparisons Instructions **************
     ///
-    pub fn cp_reg(&mut self, reg: &str) {
+    pub fn cp_reg(&mut self, reg: &str, mode: AddressingMode) {
         let reg = match reg {
             "a" => self.register_a,
             "x" => self.register_x,
@@ -546,7 +546,7 @@ impl Cpu {
         let addr = self.get_operand_address(mode);
         let val = self.mem_read(addr);
         if reg >= val {
-            if reg = val {
+            if reg == val {
                 self.set_flag("Z", true);
             }
             self.set_flag("C", true);
@@ -555,14 +555,29 @@ impl Cpu {
     }
 
     pub fn cmp(&mut self, mode: AddressingMode) {
-        self.cp_reg("a");
+        self.cp_reg("a", mode);
     }
 
     pub fn cpx(&mut self, mode: AddressingMode) {
-        self.cp_reg("x");
+        self.cp_reg("x", mode);
     }
 
     pub fn cpy(&mut self, mode: AddressingMode) {
-        self.cp_reg("y");
+        self.cp_reg("y", mode);
+    }
+
+    /// ************** Conditional Branch Instructions **************
+    ///
+    pub fn bcc(&mut self) {
+        let addr = self.get_operand_address(AddressingMode::Immediate);
+        let val = self.mem_read(addr) as i8;
+        if !self.get_flag("C") {
+            if val >= 0 {
+                self.pc += val as u16;
+            } else {
+                self.pc = self.pc.wrapping_add_signed(val as i16);
+            }
+            self.cycles += 1;
+        }
     }
 }
