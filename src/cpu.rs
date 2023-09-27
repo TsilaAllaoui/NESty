@@ -1,5 +1,4 @@
 use crate::opcode::Opcode;
-use bit::BitIndex;
 
 #[derive(Debug)]
 pub struct Cpu {
@@ -10,8 +9,8 @@ pub struct Cpu {
     pub status: u8,
     pub pc: u16,
     pub opcodes: Vec<Opcode>,
-    cycles: u16,
-    memory: [u8; 0xFFFF],
+    pub cycles: u16,
+    pub memory: [u8; 0xFFFF],
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -125,7 +124,57 @@ impl Cpu {
                     Opcode::new(0x78, String::from("SEI"), 1, 2, AddressingMode::NoneAddressing),
 
                     // Logical Operations
-                    
+                    Opcode::new(0x29, String::from("AND"), 2, 2, AddressingMode::Immediate),
+                    Opcode::new(0x25, String::from("AND"), 2, 3, AddressingMode::ZeroPage),
+                    Opcode::new(0x35, String::from("AND"), 2, 4, AddressingMode::ZeroPage_X),
+                    Opcode::new(0x2D, String::from("AND"), 3, 4, AddressingMode::Absolute),
+                    Opcode::new(0x3D, String::from("AND"), 3, 4, AddressingMode::Absolute_X),
+                    Opcode::new(0x39, String::from("AND"), 3, 4, AddressingMode::Absolute_Y),
+                    Opcode::new(0x21, String::from("AND"), 2, 6, AddressingMode::Indirect_X),
+                    Opcode::new(0x31, String::from("AND"), 2, 5, AddressingMode::Indirect_Y),
+
+                    Opcode::new(0x49, String::from("EOR"), 2, 2, AddressingMode::Immediate),
+                    Opcode::new(0x45, String::from("EOR"), 2, 3, AddressingMode::ZeroPage),
+                    Opcode::new(0x55, String::from("EOR"), 2, 4, AddressingMode::ZeroPage_X),
+                    Opcode::new(0x4D, String::from("EOR"), 3, 4, AddressingMode::Absolute),
+                    Opcode::new(0x5D, String::from("EOR"), 3, 4, AddressingMode::Absolute_X),
+                    Opcode::new(0x59, String::from("EOR"), 3, 4, AddressingMode::Absolute_Y),
+                    Opcode::new(0x41, String::from("EOR"), 2, 6, AddressingMode::Indirect_X),
+                    Opcode::new(0x51, String::from("EOR"), 2, 5, AddressingMode::Indirect_Y),
+
+                    Opcode::new(0x09, String::from("ORA"), 2, 2, AddressingMode::Immediate),
+                    Opcode::new(0x05, String::from("ORA"), 2, 3, AddressingMode::ZeroPage),
+                    Opcode::new(0x15, String::from("ORA"), 2, 4, AddressingMode::ZeroPage_X),
+                    Opcode::new(0x0D, String::from("ORA"), 3, 4, AddressingMode::Absolute),
+                    Opcode::new(0x1D, String::from("ORA"), 3, 4, AddressingMode::Absolute_X),
+                    Opcode::new(0x19, String::from("ORA"), 3, 4, AddressingMode::Absolute_Y),
+                    Opcode::new(0x01, String::from("ORA"), 2, 6, AddressingMode::Indirect_X),
+                    Opcode::new(0x11, String::from("ORA"), 2, 5, AddressingMode::Indirect_Y),
+
+                    // Shift & Rotate Instructions
+                    Opcode::new(0x0A, String::from("ASL"), 1, 2, AddressingMode::NoneAddressing),
+                    Opcode::new(0x06, String::from("ASL"), 2, 5, AddressingMode::ZeroPage),
+                    Opcode::new(0x16, String::from("ASL"), 2, 6, AddressingMode::ZeroPage_X),
+                    Opcode::new(0x0E, String::from("ASL"), 3, 6, AddressingMode::Absolute),
+                    Opcode::new(0x1E, String::from("ASL"), 3, 7, AddressingMode::Absolute_X),
+
+                    Opcode::new(0x4A, String::from("LSR"), 1, 2, AddressingMode::NoneAddressing),
+                    Opcode::new(0x46, String::from("LSR"), 2, 5, AddressingMode::ZeroPage),
+                    Opcode::new(0x56, String::from("LSR"), 2, 6, AddressingMode::ZeroPage_X),
+                    Opcode::new(0x4E, String::from("LSR"), 3, 6, AddressingMode::Absolute),
+                    Opcode::new(0x5E, String::from("LSR"), 3, 7, AddressingMode::Absolute_X),
+
+                    Opcode::new(0x2A, String::from("ROL"), 1, 2, AddressingMode::NoneAddressing),
+                    Opcode::new(0x26, String::from("ROL"), 2, 5, AddressingMode::ZeroPage),
+                    Opcode::new(0x36, String::from("ROL"), 2, 6, AddressingMode::ZeroPage_X),
+                    Opcode::new(0x2E, String::from("ROL"), 3, 6, AddressingMode::Absolute),
+                    Opcode::new(0x3E, String::from("ROL"), 3, 7, AddressingMode::Absolute_X),
+
+                    Opcode::new(0x6A, String::from("ROR"), 1, 2, AddressingMode::NoneAddressing),
+                    Opcode::new(0x66, String::from("ROR"), 2, 5, AddressingMode::ZeroPage),
+                    Opcode::new(0x76, String::from("ROR"), 2, 6, AddressingMode::ZeroPage_X),
+                    Opcode::new(0x6E, String::from("ROR"), 3, 6, AddressingMode::Absolute),
+                    Opcode::new(0x7E, String::from("ROR"), 3, 7, AddressingMode::Absolute_X),
                 ]
             },
         }
@@ -178,6 +227,9 @@ impl Cpu {
                 0xC6 | 0xD6 | 0xCE | 0xDE => self.dec(opcode.mode),
 
                 // Logical Operations
+                0x29 | 0x25 | 0x35 | 0x2D | 0x3D | 0x39 | 0x21 | 0x31 => self.and(opcode.mode),
+                0x49 | 0x45 | 0x55 | 0x4D | 0x5D | 0x59 | 0x41 | 0x51 => self.eor(opcode.mode),
+                0x09 | 0x05 | 0x15 | 0x0D | 0x1D | 0x19 | 0x01 | 0x11 => self.ora(opcode.mode),
 
                 // STA
                 0x85 | 0x95 | 0x8D | 0x9D | 0x99 | 0x81 | 0x91 => self.sta(opcode.mode),
@@ -191,420 +243,17 @@ impl Cpu {
                 0xF8 => self.set_decimal_flag(),
                 0x78 => self.set_interrupt_flag(),
 
+                // Shift & Rotate Instructions
+                0x0A | 0x06 | 0x16 | 0x0E | 0x1E => self.asl(opcode.mode),
+                0x4A | 0x46 | 0x56 | 0x4E | 0x5E => self.lsr(opcode.mode),
+                0x2A | 0x26 | 0x36 | 0x2E | 0x3E => self.rol(opcode.mode),
+                0x6A | 0x66 | 0x76 | 0x6E | 0x7E => self.ror(opcode.mode),
+
                 _ => {
                     self.brk();
                     break;
                 }
             }
         }
-    }
-
-    pub fn mem_read(&self, addr: u16) -> u8 {
-        self.memory[addr as usize]
-    }
-
-    pub fn mem_read_16(&self, addr: u16) -> u16 {
-        let lo = self.mem_read(addr) as u16;
-        let hi = self.mem_read(addr + 1) as u16;
-        (hi << 8) | (lo as u16)
-    }
-
-    pub fn mem_write_16(&mut self, addr: u16, val: u16) {
-        let hi = (val >> 8) as u8;
-        let lo = (val & 0xff) as u8;
-        self.mem_write(addr, lo);
-        self.mem_write(addr + 1, hi);
-    }
-
-    pub fn mem_write(&mut self, addr: u16, val: u8) {
-        self.memory[addr as usize] = val;
-    }
-
-    pub fn load(&mut self, program: &Vec<u8>) {
-        self.memory[0x8000..(0x8000 + program.len())].copy_from_slice(&program[..]);
-        self.mem_write_16(0xFFFC, 0x8000);
-    }
-
-    pub fn reset(&mut self) {
-        self.register_a = 0;
-        self.register_x = 0;
-        self.register_y = 0;
-        self.register_s = 0xFF;
-        self.status = 0;
-        self.pc = self.mem_read_16(0xFFFC);
-    }
-
-    pub fn load_and_run(&mut self, program: &Vec<u8>) {
-        self.load(program);
-        self.reset();
-        self.run();
-    }
-
-    fn get_operand_address(&mut self, mode: AddressingMode) -> u16 {
-        match mode {
-            AddressingMode::Immediate => {
-                self.cycles += 2;
-                let pc = self.pc;
-                self.pc += 1;
-                pc
-            }
-
-            AddressingMode::ZeroPage => {
-                self.cycles += 3;
-                let pc = self.pc;
-                self.pc += 1;
-                self.mem_read(pc) as u16
-            }
-
-            AddressingMode::Absolute => {
-                self.cycles += 4;
-                let pc = self.pc;
-                self.pc += 2;
-                self.mem_read_16(pc)
-            }
-
-            AddressingMode::ZeroPage_X => {
-                let pos = self.mem_read(self.pc);
-                let addr = pos.wrapping_add(self.register_x) as u16;
-                self.cycles += 4;
-                self.pc += 1;
-                addr
-            }
-            AddressingMode::ZeroPage_Y => {
-                let pos = self.mem_read(self.pc);
-                let addr = pos.wrapping_add(self.register_y) as u16;
-                self.cycles += 4;
-                self.pc += 1;
-                addr
-            }
-
-            AddressingMode::Absolute_X => {
-                let base = self.mem_read_16(self.pc);
-                let addr = base.wrapping_add(self.register_x as u16);
-                self.cycles += 4;
-                self.pc += 2;
-                addr
-            }
-            AddressingMode::Absolute_Y => {
-                let base = self.mem_read_16(self.pc);
-                let addr = base.wrapping_add(self.register_y as u16);
-                self.cycles += 4;
-                self.pc += 2;
-                addr
-            }
-
-            AddressingMode::Indirect_X => {
-                let base = self.mem_read(self.pc);
-
-                let ptr: u8 = (base as u8).wrapping_add(self.register_x);
-                let lo = self.mem_read(ptr as u16);
-                let hi = self.mem_read(ptr.wrapping_add(1) as u16);
-                self.cycles += 6;
-                self.pc += 1;
-                (hi as u16) << 8 | (lo as u16)
-            }
-            AddressingMode::Indirect_Y => {
-                let base = self.mem_read(self.pc);
-
-                let lo = self.mem_read(base as u16);
-                let hi = self.mem_read((base as u8).wrapping_add(1) as u16);
-                let deref_base = (hi as u16) << 8 | (lo as u16);
-                let deref = deref_base.wrapping_add(self.register_y as u16);
-                self.cycles += 5;
-                self.pc += 1;
-                deref
-            }
-
-            AddressingMode::NoneAddressing => {
-                panic!("mode {:?} is not supported", mode);
-            }
-        }
-    }
-
-    pub fn set_flag(&mut self, flag: &str, val: bool) {
-        match flag {
-            "C" => {
-                self.status.set_bit(0, val);
-            }
-            "Z" => {
-                self.status.set_bit(1, val);
-            }
-            "I" => {
-                self.status.set_bit(2, val);
-            }
-            "D" => {
-                self.status.set_bit(3, val);
-            }
-            "B" => {
-                self.status.set_bit(4, val);
-            }
-            "V" => {
-                self.status.set_bit(6, val);
-            }
-            "N" => {
-                self.status.set_bit(7, val);
-            }
-            _ => {
-                panic!("Flag {} is unknown", flag);
-            }
-        }
-    }
-
-    pub fn get_flag(&mut self, flag: &str) -> bool {
-        match flag {
-            "C" => self.status.bit(0),
-            "Z" => self.status.bit(1),
-            "I" => self.status.bit(2),
-            "D" => self.status.bit(3),
-            "B" => self.status.bit(4),
-            "V" => self.status.bit(6),
-            "N" => self.status.bit(7),
-            _ => false,
-        }
-    }
-
-    /// ************** BRK instructions **************
-    ///
-    pub fn brk(&mut self) {
-        self.status.set_bit(2, true);
-        return;
-    }
-
-    /// ************** Transfer instructions **************
-    ///
-    pub fn ld_reg(&mut self, reg: &str, mode: AddressingMode) {
-        let addr = self.get_operand_address(mode);
-        let reg = match reg {
-            "a" => {
-                self.register_a = self.mem_read(addr);
-                self.register_a
-            }
-            "x" => {
-                self.register_x = self.mem_read(addr);
-                self.register_x
-            }
-            "y" => {
-                self.register_y = self.mem_read(addr);
-                self.register_y
-            }
-            _ => panic!("Unknown Register: {}", reg),
-        };
-
-        self.set_flag("Z", reg == 0);
-        self.set_flag("N", reg.bit(7));
-    }
-
-    pub fn lda(&mut self, mode: AddressingMode) {
-        self.ld_reg("a", mode);
-    }
-
-    pub fn ldx(&mut self, mode: AddressingMode) {
-        self.ld_reg("x", mode);
-    }
-
-    pub fn ldy(&mut self, mode: AddressingMode) {
-        self.ld_reg("y", mode);
-    }
-
-    pub fn tax(&mut self) {
-        self.register_x = self.register_a;
-        self.set_flag("Z", self.register_x == 0);
-        self.set_flag("N", self.register_x.bit(7));
-    }
-
-    pub fn tay(&mut self) {
-        self.register_y = self.register_a;
-        self.set_flag("Z", self.register_y == 0);
-        self.set_flag("N", self.register_y.bit(7));
-    }
-
-    pub fn tsx(&mut self) {
-        self.register_x = self.mem_read(self.register_s as u16);
-        self.set_flag("Z", self.register_x == 0);
-        self.set_flag("N", self.register_x.bit(7));
-    }
-
-    pub fn txa(&mut self) {
-        self.register_a = self.register_x;
-        self.set_flag("Z", self.register_a == 0);
-        self.set_flag("N", self.register_a.bit(7));
-    }
-
-    pub fn txs(&mut self) {
-        self.register_s = self.register_x;
-    }
-
-    pub fn tya(&mut self) {
-        self.register_a = self.register_y;
-        self.set_flag("Z", self.register_a == 0);
-        self.set_flag("N", self.register_a.bit(7));
-    }
-
-    pub fn st_reg(&mut self, reg: &str, mode: AddressingMode) {
-        let addr = self.get_operand_address(mode);
-        match reg {
-            "a" => {
-                self.mem_write(addr, self.register_a);
-                self.register_a
-            }
-            "x" => {
-                self.mem_write(addr, self.register_x);
-                self.register_x
-            }
-            "y" => {
-                self.mem_write(addr, self.register_y);
-                self.register_y
-            }
-            _ => panic!("Unknown Register: {}", reg),
-        };
-    }
-
-    pub fn sta(&mut self, mode: AddressingMode) {
-        self.st_reg("a", mode);
-    }
-
-    pub fn stx(&mut self, mode: AddressingMode) {
-        self.st_reg("x", mode);
-    }
-
-    pub fn sty(&mut self, mode: AddressingMode) {
-        self.st_reg("y", mode);
-    }
-
-    /// ************** Decrements & IncrementsC instructions **************
-    ///
-    pub fn inc_reg(&mut self, reg: &str) {
-        let reg = match reg {
-            "a" => {
-                self.register_a = self.register_a.wrapping_add(1);
-                self.register_a
-            }
-            "x" => {
-                self.register_x = self.register_x.wrapping_add(1);
-                self.register_x
-            }
-            "y" => {
-                self.register_y = self.register_y.wrapping_add(1);
-                self.register_y
-            }
-            _ => panic!("Unknown Register: {}", reg),
-        };
-
-        self.set_flag("Z", reg == 0);
-        self.set_flag("N", reg.bit(7));
-    }
-
-    pub fn inc(&mut self, mode: AddressingMode) {
-        let addr = self.get_operand_address(mode);
-        let val = self.mem_read(addr).wrapping_add(1);
-        self.mem_write(addr, val);
-        self.set_flag("Z", val == 0);
-        self.set_flag("N", val.bit(7));
-    }
-
-    pub fn inx(&mut self) {
-        self.inc_reg("x");
-    }
-
-    pub fn iny(&mut self) {
-        self.inc_reg("y");
-    }
-
-    pub fn dec_reg(&mut self, reg: &str) {
-        let reg = match reg {
-            "a" => {
-                self.register_a = self.register_a.wrapping_sub(1);
-                self.register_a
-            }
-            "x" => {
-                self.register_x = self.register_x.wrapping_sub(1);
-                self.register_x
-            }
-            "y" => {
-                self.register_y = self.register_y.wrapping_sub(1);
-                self.register_y
-            }
-            _ => panic!("Unknown Register: {}", reg),
-        };
-
-        self.set_flag("Z", reg == 0);
-        self.set_flag("N", reg.bit(7));
-    }
-
-    pub fn dec(&mut self, mode: AddressingMode) {
-        let addr = self.get_operand_address(mode);
-        let val = self.mem_read(addr).wrapping_sub(1);
-        self.mem_write(addr, val);
-        self.set_flag("Z", val == 0);
-        self.set_flag("N", val.bit(7));
-    }
-
-    pub fn dex(&mut self) {
-        self.dec_reg("x");
-    }
-
-    pub fn dey(&mut self) {
-        self.dec_reg("y");
-    }
-
-    /// ************** Status Flags instructions **************
-    ///
-    pub fn clear_carry_flag(&mut self) {
-        self.set_flag("C", false);
-    }
-
-    pub fn set_carry_flag(&mut self) {
-        self.set_flag("C", true);
-    }
-
-    pub fn clear_decimal_flag(&mut self) {
-        self.set_flag("D", false);
-    }
-
-    pub fn set_decimal_flag(&mut self) {
-        self.set_flag("D", true);
-    }
-
-    pub fn clear_interrupt_flag(&mut self) {
-        self.set_flag("I", false);
-    }
-
-    pub fn set_interrupt_flag(&mut self) {
-        self.set_flag("I", true);
-    }
-
-    pub fn clear_overflow_flag(&mut self) {
-        self.set_flag("V", false);
-    }
-
-    /// ************** Stacks instructions **************
-    ///
-    pub fn push(&mut self, val: u8) {
-        self.mem_write(self.register_s as u16, val);
-        self.register_s -= 1;
-    }
-
-    pub fn pull(&mut self) -> u8 {
-        let val = self.mem_read(self.register_s as u16);
-        self.register_s += 1;
-        val
-    }
-
-    pub fn pha(&mut self) {
-        self.push(self.register_a);
-    }
-
-    pub fn php(&mut self) {
-        self.push(self.status);
-    }
-
-    pub fn pla(&mut self) {
-        self.register_a = self.pull();
-        self.set_flag("Z", self.register_a == 0);
-        self.set_flag("N", self.register_a.bit(7));
-    }
-
-    pub fn plp(&mut self) {
-        self.status = self.pull();
     }
 }
