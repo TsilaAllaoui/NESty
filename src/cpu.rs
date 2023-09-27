@@ -185,6 +185,14 @@ impl Cpu {
                     Opcode::new(0xD9, String::from("CMP"), 3, 4, AddressingMode::Absolute_Y),
                     Opcode::new(0xC1, String::from("CMP"), 2, 6, AddressingMode::Indirect_X),
                     Opcode::new(0xD1, String::from("CMP"), 2, 5, AddressingMode::Indirect_Y),
+
+                    Opcode::new(0xE0, String::from("CPX"), 2, 2, AddressingMode::Immediate),
+                    Opcode::new(0xE4, String::from("CPX"), 2, 3, AddressingMode::ZeroPage),
+                    Opcode::new(0xEC, String::from("CPX"), 3, 4, AddressingMode::Absolute),
+
+                    Opcode::new(0xC0, String::from("CPY"), 2, 2, AddressingMode::Immediate),
+                    Opcode::new(0xC4, String::from("CPY"), 2, 3, AddressingMode::ZeroPage),
+                    Opcode::new(0xCC, String::from("CPY"), 3, 4, AddressingMode::Absolute),
                 ]
             },
         }
@@ -261,6 +269,8 @@ impl Cpu {
 
                 // Comparisons Instructions
                 0xC9 | 0xC5 | 0xD5 | 0xCD | 0xDD | 0xD9 | 0xC1 | 0xD1 => self.cmp(opcode.mode),
+                0xE0 | 0xE4 | 0xEC => self.cpx(opcode.mode),
+                0xC0 | 0xC4 | 0xCC => self.cpy(opcode.mode),
 
                 _ => {
                     self.brk();

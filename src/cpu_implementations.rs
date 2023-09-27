@@ -535,11 +535,34 @@ impl Cpu {
 
     /// ************** Comparisons Instructions **************
     ///
-    pub fn cmp(&mut self, mode: AddressingMode) {
+    pub fn cp_reg(&mut self, reg: &str) {
+        let reg = match reg {
+            "a" => self.register_a,
+            "x" => self.register_x,
+            "y" => self.register_y,
+            _ => panic!("Unknown register: {}", reg),
+        };
+
         let addr = self.get_operand_address(mode);
         let val = self.mem_read(addr);
-        if self.register_a >= val {
-            self.set_flag("Z", true);
+        if reg >= val {
+            if reg = val {
+                self.set_flag("Z", true);
+            }
+            self.set_flag("C", true);
         }
+        self.set_flag("N", reg.bit(7));
+    }
+
+    pub fn cmp(&mut self, mode: AddressingMode) {
+        self.cp_reg("a");
+    }
+
+    pub fn cpx(&mut self, mode: AddressingMode) {
+        self.cp_reg("x");
+    }
+
+    pub fn cpy(&mut self, mode: AddressingMode) {
+        self.cp_reg("y");
     }
 }
