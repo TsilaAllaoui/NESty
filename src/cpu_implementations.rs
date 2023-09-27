@@ -568,10 +568,10 @@ impl Cpu {
 
     /// ************** Conditional Branch Instructions **************
     ///
-    pub fn bcc(&mut self) {
+    pub fn branch(&mut self, flag: &str, condition: bool) {
         let addr = self.get_operand_address(AddressingMode::Immediate);
         let val = self.mem_read(addr) as i8;
-        if !self.get_flag("C") {
+        if self.get_flag(flag) == condition {
             if val >= 0 {
                 self.pc += val as u16;
             } else {
@@ -579,5 +579,37 @@ impl Cpu {
             }
             self.cycles += 1;
         }
+    }
+
+    pub fn bcc(&mut self) {
+        self.branch("C", false);
+    }
+
+    pub fn bcs(&mut self) {
+        self.branch("C", true);
+    }
+
+    pub fn beq(&mut self) {
+        self.branch("Z", true);
+    }
+
+    pub fn bne(&mut self) {
+        self.branch("Z", false);
+    }
+
+    pub fn bmi(&mut self) {
+        self.branch("N", true);
+    }
+
+    pub fn bpl(&mut self) {
+        self.branch("N", false);
+    }
+
+    pub fn bvc(&mut self) {
+        self.branch("V", false);
+    }
+
+    pub fn bvs(&mut self) {
+        self.branch("V", true);
     }
 }

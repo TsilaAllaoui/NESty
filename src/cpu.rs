@@ -196,6 +196,13 @@ impl Cpu {
 
                     // Conditional Branch Instructions
                     Opcode::new(0x90, String::from("BCC"), 2, 2, AddressingMode::NoneAddressing),
+                    Opcode::new(0xB0, String::from("BCS"), 2, 2, AddressingMode::NoneAddressing),
+                    Opcode::new(0xF0, String::from("BEQ"), 2, 2, AddressingMode::NoneAddressing),
+                    Opcode::new(0xD0, String::from("BNE"), 2, 2, AddressingMode::NoneAddressing),
+                    Opcode::new(0x10, String::from("BPL"), 2, 2, AddressingMode::NoneAddressing),
+                    Opcode::new(0x30, String::from("BMI"), 2, 2, AddressingMode::NoneAddressing),
+                    Opcode::new(0x50, String::from("BVC"), 2, 2, AddressingMode::NoneAddressing),
+                    Opcode::new(0x70, String::from("BVS"), 2, 2, AddressingMode::NoneAddressing),
                 
                 ]
             },
@@ -278,6 +285,13 @@ impl Cpu {
 
                 // Conditional Branch Instructions
                 0x90 => self.bcc(),
+                0xB0=> self.bcs(),
+                0xF0=> self.beq(),
+                0xD0=> self.bne(),
+                0x10=> self.bpl(),
+                0x30=> self.bmi(),
+                0x50=> self.bvc(),
+                0x70=> self.bvs(),
 
                 _ => {
                     self.brk();
