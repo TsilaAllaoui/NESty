@@ -57,3 +57,10 @@ fn test_bcc_backward_jump() {
     cpu.run();
     assert_eq!(cpu.pc, 0x8001);
 }
+
+#[test]
+fn test_jmp() {
+    let mut cpu = Cpu::new();
+    cpu.load_and_run(&vec![0x6C, 0x03, 0x80, 0xa9, 0x21, 0x00]);
+    assert_eq!(cpu.register_a, 0x21);
+}

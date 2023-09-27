@@ -13,7 +13,7 @@ pub struct Cpu {
     pub memory: [u8; 0xFFFF],
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 #[allow(non_camel_case_types)]
 pub enum AddressingMode {
     Immediate,
@@ -204,6 +204,11 @@ impl Cpu {
                     Opcode::new(0x50, String::from("BVC"), 2, 2, AddressingMode::NoneAddressing),
                     Opcode::new(0x70, String::from("BVS"), 2, 2, AddressingMode::NoneAddressing),
                 
+                    // Jumps & Subroutines
+                    Opcode::new(0x4C, String::from("JMP"), 3, 3, AddressingMode::Absolute),
+                    Opcode::new(0x6C, String::from("JMP"), 3, 5, AddressingMode::NoneAddressing),
+                    
+                    Opcode::new(0x20, String::from("JSR"), 3, 6, AddressingMode::Absolute),
                 ]
             },
         }
@@ -292,6 +297,11 @@ impl Cpu {
                 0x30=> self.bmi(),
                 0x50=> self.bvc(),
                 0x70=> self.bvs(),
+
+                // Jumps & Subroutines
+                0x4C | 0x6C => self.jmp(opcode.mode), 
+                0x20 => self.jsr(opcode.mode),
+                0x60 => self.rts(),
 
                 _ => {
                     self.brk();

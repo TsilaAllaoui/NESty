@@ -612,4 +612,28 @@ impl Cpu {
     pub fn bvs(&mut self) {
         self.branch("V", true);
     }
+
+    /// ************** Jumps & Subroutines Instructions **************
+    ///
+    pub fn jmp(&mut self, mode: AddressingMode) {
+        if mode == AddressingMode::Absolute {
+            let addr = self.get_operand_address(mode);
+            self.pc = self.mem_read_16(addr);
+        } else if mode == AddressingMode::NoneAddressing {
+            let addr = self.mem_read_16(self.pc);
+            self.pc = addr;
+            self.cycles += 5;
+        }
+    }
+
+    pub fn jsr(&mut self, mode: AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        self.push(self.pc as u8);
+        self.pc = self.mem_read(addr) as u16;
+    }
+
+    pub fn rts(&mut self) {
+        self.pc = self.pull() as u16;
+        self.cycles += 6;
+    }
 }
