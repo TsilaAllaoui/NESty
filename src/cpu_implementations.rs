@@ -99,8 +99,7 @@ impl Cpu {
 
             AddressingMode::Indirect_X => {
                 let base = self.mem_read(self.pc);
-
-                let ptr: u8 = (base as u8).wrapping_add(self.register_x);
+                let ptr: u8 = base.wrapping_add(self.register_x);
                 let lo = self.mem_read(ptr as u16);
                 let hi = self.mem_read(ptr.wrapping_add(1) as u16);
                 self.cycles += 6;
