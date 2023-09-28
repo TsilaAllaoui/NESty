@@ -225,7 +225,7 @@ impl Cpu {
     }
 
     pub fn tsx(&mut self) {
-        self.register_x = self.mem_read(self.register_s as u16);
+        self.register_x = self.pull();
         self.set_flag("Z", self.register_x == 0);
         self.set_flag("N", self.register_x.bit(7));
     }
@@ -391,8 +391,8 @@ impl Cpu {
     }
 
     pub fn pull(&mut self) -> u8 {
-        let val = self.mem_read(self.register_s as u16);
         self.register_s += 1;
+        let val = self.mem_read(self.register_s as u16);
         val
     }
 
