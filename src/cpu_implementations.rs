@@ -172,7 +172,7 @@ impl Cpu {
     /// ************** BRK instructions **************
     ///
     pub fn brk(&mut self) {
-        self.status.set_bit(2, true);
+        // self.status.set_bit(2, true);
         return;
     }
 

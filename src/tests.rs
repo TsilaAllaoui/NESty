@@ -706,3 +706,76 @@ fn test_plp() {
     cpu.run(); // Execute the PLP instruction
     assert_eq!(cpu.status, 0x7F); // Check the value in the status register after execution
 }
+
+// CLC, CLD, CLI, CLV, SEC, SED, and SEI
+
+#[test]
+fn test_clc() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x18]); // CLC instruction
+    cpu.status = 0x01; // Set Carry flag to 1 (true)
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the CLC instruction
+    assert_eq!(cpu.get_flag("C"), false); // Check if Carry flag is cleared (false)
+}
+
+#[test]
+fn test_cld() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xD8]); // CLD instruction
+    cpu.status = 0x08; // Set Decimal mode flag to 1 (true)
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the CLD instruction
+    assert_eq!(cpu.get_flag("D"), false); // Check if Decimal mode flag is cleared (false)
+}
+
+#[test]
+fn test_cli() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x58]); // CLI instruction
+    cpu.status = 0x04; // Set Interrupt disable flag to 1 (true)
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the CLI instruction
+    let val = cpu.get_flag("I");
+    assert_eq!(val, false); // Check if Interrupt disable flag is cleared (false)
+}
+
+#[test]
+fn test_clv() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xB8]); // CLV instruction
+    cpu.status = 0x40; // Set Overflow flag to 1 (true)
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the CLV instruction
+    assert_eq!(cpu.get_flag("V"), false); // Check if Overflow flag is cleared (false)
+}
+
+#[test]
+fn test_sec() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x38]); // SEC instruction
+    cpu.status = 0x00; // Clear Carry flag (false)
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the SEC instruction
+    assert_eq!(cpu.get_flag("C"), true); // Check if Carry flag is set (true)
+}
+
+#[test]
+fn test_sed() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xF8]); // SED instruction
+    cpu.status = 0x00; // Clear Decimal mode flag (false)
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the SED instruction
+    assert_eq!(cpu.get_flag("D"), true); // Check if Decimal mode flag is set (true)
+}
+
+#[test]
+fn test_sei() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x78]); // SEI instruction
+    cpu.status = 0x00; // Clear Interrupt disable flag (false)
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the SEI instruction
+    assert_eq!(cpu.get_flag("I"), true); // Check if Interrupt disable flag is set (true)
+}
