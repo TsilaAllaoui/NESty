@@ -964,3 +964,113 @@ fn test_eor_indirect_y() {
 }
 
 // ORA
+
+#[test]
+fn test_ora_immediate() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x09, 0x3C]); // ORA immediate with value 0x3C
+    cpu.register_a = 0x24; // Set A register to 0x24
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.register_a, 0x3C);
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), false);
+}
+
+#[test]
+fn test_ora_zero_page() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x05, 0x10]); // ORA zero page with address 0x10
+    cpu.mem_write(0x0010, 0x2A); // Set value at address 0x10 to 0x2A
+    cpu.register_a = 0x05; // Set A register to 0x05
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.register_a, 0x2F); // 0x05 | 0x2A = 0x2F
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), false);
+}
+
+#[test]
+fn test_ora_zero_page_x() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x15, 0x10]); // ORA zero page,X with address 0x10
+    cpu.register_x = 0x03; // Set X register to 0x03
+    cpu.mem_write(0x0013, 0x0F); // Set value at address 0x13 (0x10 + 0x03) to 0x0F
+    cpu.register_a = 0x21; // Set A register to 0x21
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.register_a, 0x2F); // 0x21 | 0x0F = 0x2F
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), false);
+}
+
+#[test]
+fn test_ora_absolute() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x0D, 0x34, 0x12]); // ORA absolute with address 0x1234
+    cpu.mem_write(0x1234, 0x42); // Set value at address 0x1234 to 0x42
+    cpu.register_a = 0x31; // Set A register to 0x31
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.register_a, 0x73); // 0x31 | 0x42 = 0x73
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), false);
+}
+
+#[test]
+fn test_ora_absolute_x() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x1D, 0x34, 0x12]); // ORA absolute,X with address 0x1234
+    cpu.register_x = 0x02; // Set X register to 0x02
+    cpu.mem_write(0x1236, 0x1E); // Set value at address 0x1236 (0x1234 + 0x02) to 0x1E
+    cpu.register_a = 0x37; // Set A register to 0x37
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.register_a, 0x3F); // 0x37 | 0x1E = 0x3F
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), false);
+}
+
+#[test]
+fn test_ora_absolute_y() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x19, 0x34, 0x12]); // ORA absolute,Y with address 0x1234
+    cpu.register_y = 0x01; // Set Y register to 0x01
+    cpu.mem_write(0x1235, 0x3C); // Set value at address 0x1235 (0x1234 + 0x01) to 0x3C
+    cpu.register_a = 0x27; // Set A register to 0x27
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.register_a, 0x3F); // 0x27 | 0x3C = 0x3F
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), false);
+}
+
+#[test]
+fn test_ora_indirect_x() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x01, 0x10]); // ORA (zero page,X) with address 0x10
+    cpu.register_x = 0x02; // Set X register to 0x02
+    cpu.mem_write(0x0012, 0x2F); // Set value at address 0x12 (0x10 + 0x02) to 0x2F
+    cpu.mem_write(0x2F2F, 0x0A); // Set value at address 0x2F2F to 0x0A
+    cpu.register_a = 0x1E; // Set A register to 0x1E
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.register_a, 0x1E | 0x0A); // 0x1E | 0x0A = 0x1E
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), false);
+}
+
+#[test]
+fn test_ora_indirect_y() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x11, 0x10]); // ORA (zero page),Y with address 0x10
+    cpu.register_y = 0x01; // Set Y register to 0x01
+    cpu.mem_write(0x0010, 0x34); // Set value at address 0x10 to 0x34
+    cpu.mem_write(0x0035, 0x07); // Set value at address 0x35 (0x34 + 0x01) to 0x07
+    cpu.register_a = 0x3A; // Set A register to 0x3A
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.register_a, 0x3A | 0x07); // 0x3A | 0x07 = 0x3F
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), false);
+}

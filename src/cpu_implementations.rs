@@ -431,7 +431,7 @@ impl Cpu {
 
     pub fn ora(&mut self, mode: AddressingMode) {
         let addr = self.get_operand_address(mode);
-        self.register_a ^= self.mem_read(addr);
+        self.register_a |= self.mem_read(addr);
         self.set_flag("Z", self.register_a == 0);
         self.set_flag("N", self.register_a.bit(7));
     }
