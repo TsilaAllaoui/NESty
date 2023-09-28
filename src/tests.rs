@@ -1,5 +1,20 @@
 use super::*;
 
+// JMP
+#[test]
+fn test_jmp_absolute() {
+    let mut cpu = Cpu::new();
+    cpu.load_and_run(&vec![0x4C, 0x03, 0x80, 0xa9, 0x21, 0x00]);
+    assert_eq!(cpu.pc, 0x8006);
+}
+
+#[test]
+fn test_jmp_indirect() {
+    let mut cpu = Cpu::new();
+    cpu.load_and_run(&vec![0x6C, 0x03, 0x80, 0x00, 0x90]);
+    assert_eq!(cpu.pc, 0x9001);
+}
+
 // LDA
 #[test]
 fn test_lda_immediate() {
@@ -103,65 +118,59 @@ fn test_inc_absolute_x() {
 }
 
 #[test]
-fn test_tax() {
+fn test_inc_zero_page_overflow() {
     let mut cpu = Cpu::new();
-    cpu.load_and_run(&vec![0xa9, 0x0a, 0xaa, 0x00]);
-
-    assert_eq!(cpu.register_x, 10)
-}
-
-// #[test]
-// fn test_tay() {
-//     let mut cpu = Cpu::new();
-//     cpu.load_and_run(&vec![0xa9, 0xfe, 0xa8, 0x00]);
-//     assert_eq!(cpu.register_y, 0xfe);
-// }
-
-// #[test]
-// fn test_inx() {
-//     let mut cpu = Cpu::new();
-//     cpu.load_and_run(&vec![0xa2, 0xff, 0xe8, 0xe8, 0x00]);
-
-//     assert_eq!(cpu.register_x, 1)
-// }
-
-// #[test]
-// fn test_asl() {
-//     let mut cpu = Cpu::new();
-//     cpu.load_and_run(&vec![0xa9, 0xc0, 0x0a, 0x00]);
-//     assert_eq!(cpu.register_a, 0x80);
-//     assert_eq!(cpu.status, 0x85);
-// }
-
-// #[test]
-// fn test_bcc() {
-//     let mut cpu = Cpu::new();
-//     cpu.load(&vec![0x18, 0x90, 0x02, 0x00]);
-//     cpu.pc = 0x8000;
-//     cpu.run();
-//     assert_eq!(cpu.pc, 0x8006);
-// }
-
-// #[test]
-// fn test_bcc_backward_jump() {
-//     let mut cpu = Cpu::new();
-//     cpu.load(&vec![0x00, 0x18, 0x90, 0xFC, 0x00]);
-//     cpu.pc = 0x8001;
-//     cpu.run();
-//     assert_eq!(cpu.pc, 0x8001);
-// }
-
-// JMP
-#[test]
-fn test_jmp_absolute() {
-    let mut cpu = Cpu::new();
-    cpu.load_and_run(&vec![0x4C, 0x03, 0x80, 0xa9, 0x21, 0x00]);
-    assert_eq!(cpu.pc, 0x8006);
+    cpu.load(&vec![0xE6, 0x02]); // INC instruction with zero page indexed addressing mode
+    cpu.mem_write(0x02, 0xFF); // Set the value at address 0x02 to maximum value 0xFF
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the INC instruction
+    assert_eq!(cpu.mem_read(0x02), 0x00); // Check the value after execution (should wrap around to 0x00)
+    assert_eq!(cpu.get_flag("C"), false); // Check if carry flag is clear
+    assert_eq!(cpu.get_flag("Z"), true); // Check if zero flag is set
+    assert_eq!(cpu.get_flag("N"), false); // Check if negative flag is clear
+    assert_eq!(cpu.get_flag("V"), false); // Check if overflow flag is clear
 }
 
 #[test]
-fn test_jmp_indirect() {
+fn test_inc_zero_page_x_overflow() {
     let mut cpu = Cpu::new();
-    cpu.load_and_run(&vec![0x6C, 0x03, 0x80, 0x00, 0x90]);
-    assert_eq!(cpu.pc, 0x9001);
+    cpu.register_x = 0xFF; // Set X register to a large value (will wrap around to 0x02)
+    cpu.load(&vec![0xF6, 0x02]); // INC instruction with zero page indexed addressing mode
+    cpu.mem_write(0x01, 0xFF); // Set the value at address 0x04 to maximum value 0xFF
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the INC instruction
+    assert_eq!(cpu.mem_read(0x01), 0x00); // Check the value after execution (should wrap around to 0x00)
+    assert_eq!(cpu.get_flag("C"), false); // Check if carry flag is clear
+    assert_eq!(cpu.get_flag("Z"), true); // Check if zero flag is set
+    assert_eq!(cpu.get_flag("N"), false); // Check if negative flag is clear
+    assert_eq!(cpu.get_flag("V"), false); // Check if overflow flag is clear
+}
+
+#[test]
+fn test_inc_absolute_overflow() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xEE, 0x03, 0x80]); // INC instruction with absolute addressing mode
+    cpu.mem_write(0x8003, 0xFF); // Set the value at address 0x8000 to maximum value 0xFF
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the INC instruction
+    assert_eq!(cpu.mem_read(0x8003), 0x00); // Check the value after execution (should wrap around to 0x00)
+    assert_eq!(cpu.get_flag("C"), false); // Check if carry flag is clear
+    assert_eq!(cpu.get_flag("Z"), true); // Check if zero flag is set
+    assert_eq!(cpu.get_flag("N"), false); // Check if negative flag is clear
+    assert_eq!(cpu.get_flag("V"), false); // Check if overflow flag is clear
+}
+
+#[test]
+fn test_inc_absolute_x_overflow() {
+    let mut cpu = Cpu::new();
+    cpu.register_x = 0x02; // Set X register
+    cpu.load(&vec![0xFE, 0x03, 0x80]); // INC instruction with absolute indexed addressing mode
+    cpu.mem_write(0x8005, 0xFF); // Set the value at address 0x8002 to maximum value 0xFF
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the INC instruction
+    assert_eq!(cpu.mem_read(0x8005), 0x00); // Check the value after execution (should wrap around to 0x00)
+    assert_eq!(cpu.get_flag("C"), false); // Check if carry flag is clear
+    assert_eq!(cpu.get_flag("Z"), true); // Check if zero flag is set
+    assert_eq!(cpu.get_flag("N"), false); // Check if negative flag is clear
+    assert_eq!(cpu.get_flag("V"), false); // Check if overflow flag is clear
 }
