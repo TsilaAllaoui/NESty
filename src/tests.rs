@@ -1212,3 +1212,140 @@ fn test_lsr_absolute_x() {
     assert_eq!(cpu.get_flag("Z"), false);
     assert_eq!(cpu.get_flag("N"), false);
 }
+
+// ROR , ROL
+
+#[test]
+fn test_ror_accumulator() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x6A]); // ROR accumulator
+    cpu.register_a = 0x85; // Set A register to 0x85
+    cpu.pc = 0x8000; // Set program counter
+    cpu.set_flag("C", true);
+    cpu.run();
+    assert_eq!(cpu.register_a, 0x85 >> 1 | (1 << 7)); // 0x85 >> 1 = 0x42, 0x85 << 7 = 0x00, so result is 0x42
+    assert_eq!(cpu.get_flag("C"), true);
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), true);
+}
+
+#[test]
+fn test_rol_accumulator() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x2A]); // ROL accumulator
+    cpu.register_a = 0x85; // Set A register to 0x85
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.register_a, 0x85 << 1); // 0x85 << 1 = 0x0A, with carry set, result is 0x0B
+    assert_eq!(cpu.get_flag("C"), true);
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), false);
+}
+
+#[test]
+fn test_ror_zero_page() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x66, 0x10]); // ROR zero page with address 0x10
+    cpu.mem_write(0x0010, 0x7F); // Set value at address 0x10 to 0x7F
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.mem_read(0x0010), 0x7F >> 1); // 0x7F >> 1 = 0x3F, 0x7F << 7 = 0xFE, so result is 0xFE
+    assert_eq!(cpu.get_flag("C"), true);
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), false);
+}
+
+#[test]
+fn test_rol_zero_page() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x26, 0x10]); // ROL zero page with address 0x10
+    cpu.mem_write(0x0010, 0x7F); // Set value at address 0x10 to 0x7F
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.mem_read(0x0010), 0x7F << 1); // 0x7F << 1 = 0xFE, with carry set, result is 0xFF
+    assert_eq!(cpu.get_flag("C"), false);
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), true);
+}
+
+#[test]
+fn test_ror_zero_page_x() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x76, 0x10]); // ROR zero page,X with address 0x10
+    cpu.register_x = 0x01; // Set X register to 0x01
+    cpu.mem_write(0x0011, 0x3E); // Set value at address 0x11 (0x10 + 0x01) to 0x3E
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.mem_read(0x0011), 0x3E >> 1); // 0x3E >> 1 = 0x1F, 0x3E << 7 = 0xFE, so result is 0xFE
+    assert_eq!(cpu.get_flag("C"), false);
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), false);
+}
+
+#[test]
+fn test_rol_zero_page_x() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x36, 0x10]); // ROL zero page,X with address 0x10
+    cpu.register_x = 0x01; // Set X register to 0x01
+    cpu.mem_write(0x0011, 0x7F); // Set value at address 0x11 (0x10 + 0x01) to 0x7F
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.mem_read(0x0011), 0x7F << 1); // 0x7F << 1 = 0xFE, with carry set, result is 0xFF
+    assert_eq!(cpu.get_flag("C"), false);
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), true);
+}
+
+#[test]
+fn test_ror_absolute() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x6E, 0x34, 0x12]); // ROR absolute with address 0x1234
+    cpu.mem_write(0x1234, 0x7F); // Set value at address 0x1234 to 0x7F
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.mem_read(0x1234), 0x7F >> 1); // 0x7F >> 1 = 0x3F, 0x7F << 7 = 0xFE, so result is 0xFE
+    assert_eq!(cpu.get_flag("C"), true);
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), false);
+}
+
+#[test]
+fn test_rol_absolute() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x2E, 0x34, 0x12]); // ROL absolute with address 0x1234
+    cpu.mem_write(0x1234, 0x7F); // Set value at address 0x1234 to 0x7F
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.mem_read(0x1234), 0x7F << 1); // 0x7F << 1 = 0xFE, with carry set, result is 0xFF
+    assert_eq!(cpu.get_flag("C"), false);
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), true);
+}
+
+#[test]
+fn test_ror_absolute_x() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x7E, 0x34, 0x12]); // ROR absolute,X with address 0x1234
+    cpu.register_x = 0x01; // Set X register to 0x01
+    cpu.mem_write(0x1235, 0x7F); // Set value at address 0x1235 (0x1234 + 0x01) to 0x7F
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.mem_read(0x1235), 0x7F >> 1); // 0x7F >> 1 = 0x3F, 0x7F << 7 = 0xFE, so result is 0xFE
+    assert_eq!(cpu.get_flag("C"), true);
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), false);
+}
+
+#[test]
+fn test_rol_absolute_x() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x3E, 0x34, 0x12]); // ROL absolute,X with address 0x1234
+    cpu.register_x = 0x01; // Set X register to 0x01
+    cpu.mem_write(0x1235, 0x7F); // Set value at address 0x1235 (0x1234 + 0x01) to 0x7F
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.mem_read(0x1235), 0x7F << 1); // 0x7F << 1 = 0xFE, with carry set, result is 0xFF
+    assert_eq!(cpu.get_flag("C"), false);
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), true);
+}
