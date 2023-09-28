@@ -779,3 +779,63 @@ fn test_sei() {
     cpu.run(); // Execute the SEI instruction
     assert_eq!(cpu.get_flag("I"), true); // Check if Interrupt disable flag is set (true)
 }
+
+//AND
+
+#[test]
+fn test_and_immediate() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xA9, 0x0F, 0x29, 0x07]); // LDA, AND with immediate values
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the instructions
+    assert_eq!(cpu.register_a, 0x07); // Check if A register has correct value after AND operation
+}
+
+#[test]
+fn test_and_zero_page() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xA5, 0x42, 0x25, 0x42]); // LDA, AND with zero page addressing mode
+    cpu.mem_write(0x42, 0b11001100); // Set value at address 0x42
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the instructions
+    assert_eq!(cpu.register_a, 0b11001100); // Check if A register has correct value after AND operation
+}
+
+#[test]
+fn test_and_zero_page_x() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xA2, 0x02, 0xA9, 0b11110000, 0x95, 0x00]); // LDX, LDA, AND with zero page indexed addressing mode (X register)
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the instructions
+    assert_eq!(cpu.register_a, 0b11110000); // Check if A register has correct value after AND operation
+}
+
+#[test]
+fn test_and_absolute() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xAD, 0x00, 0x90, 0x2D, 0x00, 0x90]); // LDA, AND with absolute addressing mode
+    cpu.mem_write(0x9000, 0b10101010); // Set value at address 0x9000
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the instructions
+    assert_eq!(cpu.register_a, 0b10101010); // Check if A register has correct value after AND operation
+}
+
+#[test]
+fn test_and_absolute_x() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xA2, 0x02, 0xBD, 0x00, 0x02]); // LDX, LDA, AND with absolute indexed addressing mode (X register)
+    cpu.mem_write(0x0202, 0b11001100); // Set value at address 0x0202
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the instructions
+    assert_eq!(cpu.register_a, 0b11001100); // Check if A register has correct value after AND operation
+}
+
+// Edge Case: Zero result
+#[test]
+fn test_and_zero_result() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xA9, 0b11001100, 0x29, 0b00110011]); // LDA, AND with immediate values
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the instructions
+    assert_eq!(cpu.register_a, 0b00000000); // Check if A register has correct value after AND operation
+}
