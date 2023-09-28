@@ -1074,3 +1074,72 @@ fn test_ora_indirect_y() {
     assert_eq!(cpu.get_flag("Z"), false);
     assert_eq!(cpu.get_flag("N"), false);
 }
+
+// ASL
+
+#[test]
+fn test_asl_accumulator() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x0A]); // ASL accumulator
+    cpu.register_a = 0x85; // Set A register to 0x85
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.register_a, 0x0A); // 0x85 << 1 = 0x0A
+    assert_eq!(cpu.get_flag("C"), true);
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), false);
+}
+
+#[test]
+fn test_asl_zero_page() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x06, 0x10]); // ASL zero page with address 0x10
+    cpu.mem_write(0x0010, 0x7F); // Set value at address 0x10 to 0x7F
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.mem_read(0x0010), 0xFE); // 0x7F << 1 = 0xFE
+    assert_eq!(cpu.get_flag("C"), false);
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), true);
+}
+
+#[test]
+fn test_asl_zero_page_x() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x16, 0x10]); // ASL zero page,X with address 0x10
+    cpu.register_x = 0x03; // Set X register to 0x03
+    cpu.mem_write(0x0013, 0x3E); // Set value at address 0x13 (0x10 + 0x03) to 0x3E
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.mem_read(0x0013), 0x7C); // 0x3E << 1 = 0x7C
+    assert_eq!(cpu.get_flag("C"), false);
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), false);
+}
+
+#[test]
+fn test_asl_absolute() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x0E, 0x34, 0x12]); // ASL absolute with address 0x1234
+    cpu.mem_write(0x1234, 0xB3); // Set value at address 0x1234 to 0xB3
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.mem_read(0x1234), 0x66); // 0xB3 << 1 = 0x66
+    assert_eq!(cpu.get_flag("C"), true);
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), false);
+}
+
+#[test]
+fn test_asl_absolute_x() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0x1E, 0x34, 0x12]); // ASL absolute,X with address 0x1234
+    cpu.register_x = 0x02; // Set X register to 0x02
+    cpu.mem_write(0x1236, 0x19); // Set value at address 0x1236 (0x1234 + 0x02) to 0x19
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.mem_read(0x1236), 0x32); // 0x19 << 1 = 0x32
+    assert_eq!(cpu.get_flag("C"), false);
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), false);
+}
