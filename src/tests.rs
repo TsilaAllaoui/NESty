@@ -839,3 +839,63 @@ fn test_and_zero_result() {
     cpu.run(); // Execute the instructions
     assert_eq!(cpu.register_a, 0b00000000); // Check if A register has correct value after AND operation
 }
+
+// EOR
+
+#[test]
+fn test_eor_immediate() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xA9, 0b11001100, 0x49, 0b00110011]); // LDA, EOR with immediate values
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the instructions
+    assert_eq!(cpu.register_a, 0b11111111); // Check if A register has correct value after EOR operation
+}
+
+#[test]
+fn test_eor_zero_page() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xA5, 0x42, 0x45, 0x42]); // LDA, EOR with zero page addressing mode
+    cpu.mem_write(0x42, 0b11001100); // Set value at address 0x42
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the instructions
+    assert_eq!(cpu.register_a, 0b00000000); // Check if A register has correct value after EOR operation
+}
+
+#[test]
+fn test_eor_zero_page_x() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xA2, 0x02, 0xA9, 0b11110000, 0x55, 0x00]); // LDX, LDA, EOR with zero page indexed addressing mode (X register)
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the instructions
+    assert_eq!(cpu.register_a, 0b11110000); // Check if A register has correct value after EOR operation
+}
+
+#[test]
+fn test_eor_absolute() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xAD, 0x00, 0x90, 0x4D, 0x00, 0x90]); // LDA, EOR with absolute addressing mode
+    cpu.mem_write(0x9000, 0b10101010); // Set value at address 0x9000
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the instructions
+    assert_eq!(cpu.register_a, 0b00000000); // Check if A register has correct value after EOR operation
+}
+
+#[test]
+fn test_eor_absolute_x() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xA2, 0x02, 0xBD, 0x00, 0x02]); // LDX, LDA, EOR with absolute indexed addressing mode (X register)
+    cpu.mem_write(0x0202, 0b11001100); // Set value at address 0x0202
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the instructions
+    assert_eq!(cpu.register_a, 0b11001100); // Check if A register has correct value after EOR operation
+}
+
+// Edge Case: Zero result
+#[test]
+fn test_eor_zero_result() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xA9, 0b11001100, 0x49, 0b11001100]); // LDA, EOR with immediate values
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the instructions
+    assert_eq!(cpu.register_a, 0b00000000); // Check if A register has correct value after EOR operation
+}
