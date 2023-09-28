@@ -1541,3 +1541,5 @@ fn test_cpy_absolute() {
     assert_eq!(cpu.get_flag("Z"), false);
     assert_eq!(cpu.get_flag("N"), false);
 }
+
+// BEQ, BNE, BCC, BCS, BMI, BPL, BVC, BVS
