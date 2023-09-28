@@ -660,3 +660,49 @@ fn test_tsx() {
     cpu.run(); // Execute the TSX instruction
     assert_eq!(cpu.register_x, 0x7F); // Check the value of X register after execution
 }
+
+// PHA, PHP, PLA, PLP
+
+#[test]
+fn test_pha() {
+    let mut cpu = Cpu::new();
+    cpu.register_s = 0xFC;
+    cpu.load(&vec![0x48]); // PHA instruction
+    cpu.register_a = 0x7F; // Set A register to 0x7F
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the PHA instruction
+    assert_eq!(cpu.pull(), 0x7F); // Check the value on the stack after execution
+}
+
+#[test]
+fn test_php() {
+    let mut cpu = Cpu::new();
+    cpu.register_s = 0xFC;
+    cpu.load(&vec![0x08]); // PHP instruction
+    cpu.status = 0x7F; // Set status register to 0x7F
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the PHP instruction
+    assert_eq!(cpu.pull(), 0x7F); // Check the value on the stack after execution
+}
+
+#[test]
+fn test_pla() {
+    let mut cpu = Cpu::new();
+    cpu.register_s = 0xFC;
+    cpu.load(&vec![0x68]); // PLA instruction
+    cpu.push(0x7F); // Push 0x7F onto the stack
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the PLA instruction
+    assert_eq!(cpu.register_a, 0x7F); // Check the value in the A register after execution
+}
+
+#[test]
+fn test_plp() {
+    let mut cpu = Cpu::new();
+    cpu.register_s = 0xFC;
+    cpu.load(&vec![0x28]); // PLP instruction
+    cpu.push(0x7F); // Push 0x7F onto the stack
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the PLP instruction
+    assert_eq!(cpu.status, 0x7F); // Check the value in the status register after execution
+}
