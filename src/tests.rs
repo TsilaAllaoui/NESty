@@ -150,7 +150,7 @@ fn test_inc_zero_page_x_overflow() {
 fn test_inc_absolute_overflow() {
     let mut cpu = Cpu::new();
     cpu.load(&vec![0xEE, 0x03, 0x80]); // INC instruction with absolute addressing mode
-    cpu.mem_write(0x8003, 0xFF); // Set the value at address 0x8000 to maximum value 0xFF
+    cpu.mem_write(0x8003, 0xFF); // Set the value at address 0x8003 to maximum value 0xFF
     cpu.pc = 0x8000; // Set program counter to 0x8000
     cpu.run(); // Execute the INC instruction
     assert_eq!(cpu.mem_read(0x8003), 0x00); // Check the value after execution (should wrap around to 0x00)
@@ -165,7 +165,7 @@ fn test_inc_absolute_x_overflow() {
     let mut cpu = Cpu::new();
     cpu.register_x = 0x02; // Set X register
     cpu.load(&vec![0xFE, 0x03, 0x80]); // INC instruction with absolute indexed addressing mode
-    cpu.mem_write(0x8005, 0xFF); // Set the value at address 0x8002 to maximum value 0xFF
+    cpu.mem_write(0x8005, 0xFF); // Set the value at address 0x8005 to maximum value 0xFF
     cpu.pc = 0x8000; // Set program counter to 0x8000
     cpu.run(); // Execute the INC instruction
     assert_eq!(cpu.mem_read(0x8005), 0x00); // Check the value after execution (should wrap around to 0x00)
@@ -173,4 +173,68 @@ fn test_inc_absolute_x_overflow() {
     assert_eq!(cpu.get_flag("Z"), true); // Check if zero flag is set
     assert_eq!(cpu.get_flag("N"), false); // Check if negative flag is clear
     assert_eq!(cpu.get_flag("V"), false); // Check if overflow flag is clear
+}
+
+// DEC
+
+#[test]
+fn test_dec_zero_page() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xC6, 0x10]); // DEC instruction with zero page addressing mode
+    cpu.mem_write(0x10, 0x7F); // Set the value at address 0x10 to 0x7F
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the DEC instruction
+    assert_eq!(cpu.mem_read(0x10), 0x7E); // Check the value after execution
+}
+
+#[test]
+fn test_dec_zero_page_x() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xD6, 0x10]); // DEC instruction with zero page indexed addressing mode
+    cpu.mem_write(0x12, 0x7F); // Set the value at address 0x12 to 0x7F
+    cpu.register_x = 0x02; // Set X register
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the DEC instruction
+    assert_eq!(cpu.mem_read(0x12), 0x7E); // Check the value after execution
+}
+
+#[test]
+fn test_dec_absolute() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xCE, 0x00, 0x90]); // DEC instruction with absolute addressing mode
+    cpu.mem_write(0x9000, 0x7F); // Set the value at address 0x9000 to 0x7F
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the DEC instruction
+    assert_eq!(cpu.mem_read(0x9000), 0x7E); // Check the value after execution
+}
+
+#[test]
+fn test_dec_absolute_x() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xDE, 0x00, 0x90]); // DEC instruction with absolute indexed addressing mode
+    cpu.mem_write(0x9002, 0x7F); // Set the value at address 0x9002 to 0x7F
+    cpu.register_x = 0x02; // Set X register
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the DEC instruction
+    assert_eq!(cpu.mem_read(0x9002), 0x7E); // Check the value after execution
+}
+
+#[test]
+fn test_dec_zero_page_underflow() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xC6, 0x10]); // DEC instruction with zero page addressing mode
+    cpu.mem_write(0x10, 0x00); // Set the value at address 0x10 to minimum value 0x00
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the DEC instruction
+    assert_eq!(cpu.mem_read(0x10), 0xFF); // Check the value after execution (should wrap around to 0xFF)
+}
+
+#[test]
+fn test_dec_absolute_underflow() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xCE, 0x00, 0x90]); // DEC instruction with absolute addressing mode
+    cpu.mem_write(0x9000, 0x00); // Set the value at address 0x9000 to minimum value 0x00
+    cpu.pc = 0x8000; // Set program counter to 0x8000
+    cpu.run(); // Execute the DEC instruction
+    assert_eq!(cpu.mem_read(0x9000), 0xFF); // Check the value after execution (should wrap around to 0xFF)
 }
