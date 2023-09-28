@@ -618,10 +618,10 @@ impl Cpu {
     pub fn jmp(&mut self, mode: AddressingMode) {
         if mode == AddressingMode::Absolute {
             let addr = self.get_operand_address(mode);
-            self.pc = self.mem_read_16(addr);
+            self.pc = addr;
         } else if mode == AddressingMode::NoneAddressing {
             let addr = self.mem_read_16(self.pc);
-            self.pc = addr;
+            self.pc = self.mem_read_16(addr);
             self.cycles += 5;
         }
     }
