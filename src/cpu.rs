@@ -35,7 +35,7 @@ impl Cpu {
             register_x: 0,
             register_y: 0,
             register_s: 0,
-            status: 0,
+            status: 0b00100000,
             pc: 0,
             cycles: 0,
             memory: [0; 0xFFFF],
@@ -219,12 +219,15 @@ impl Cpu {
             let code = self.memory[self.pc as usize];
             self.pc += 1;
 
-            let opcode = self
+            let mut opcode = &Opcode { code: 0x00, name: "BRK".to_string(), bytes: 1, cycles: 2, mode: AddressingMode::NoneAddressing };
+            if let Some(o) = self
                 .opcodes
                 .iter()
                 .filter(|o| o.code == code)
-                .next()
-                .expect("Can't get opcode from filter");
+                .next() {
+                opcode = o;
+            };
+                
 
             match opcode.code {
                 // BRK

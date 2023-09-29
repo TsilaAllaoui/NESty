@@ -1,1 +1,3 @@
 /target
+/test_generator/*
+!/test_generator/src

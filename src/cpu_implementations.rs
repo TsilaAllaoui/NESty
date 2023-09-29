@@ -172,6 +172,7 @@ impl Cpu {
     ///
     pub fn brk(&mut self) {
         // self.status.set_bit(2, true);
+        // self.pc -= 1;
         return;
     }
 
@@ -179,7 +180,7 @@ impl Cpu {
     ///
     pub fn ld_reg(&mut self, reg: &str, mode: AddressingMode) {
         let addr = self.get_operand_address(mode);
-        let reg = match reg {
+        let updated_reg = match reg {
             "a" => {
                 self.register_a = self.mem_read(addr);
                 self.register_a
@@ -195,8 +196,8 @@ impl Cpu {
             _ => panic!("Unknown Register: {}", reg),
         };
 
-        self.set_flag("Z", reg == 0);
-        self.set_flag("N", reg.bit(7));
+        self.set_flag("Z", updated_reg == 0);
+        self.set_flag("N", updated_reg.bit(7));
     }
 
     pub fn lda(&mut self, mode: AddressingMode) {
