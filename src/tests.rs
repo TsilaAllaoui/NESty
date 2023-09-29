@@ -3451,3 +3451,197 @@ fn test_a9_02_99() {
     assert_eq!(cpu.register_x, 167);
     assert_eq!(cpu.register_y, 2);
 }
+
+// CMP
+
+#[test]
+fn test_cmp_immediate() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xC9, 0x42]); // CMP immediate with value 0x42
+    cpu.register_a = 0x50; // Set A register to 0x50
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.get_flag("C"), true); // Carry set because A >= value
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), false);
+}
+
+#[test]
+fn test_cmp_zero_page() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xC5, 0x10]); // CMP zero page with address 0x10
+    cpu.mem_write(0x0010, 0x20); // Set value at address 0x10 to 0x30
+    cpu.register_a = 0x20; // Set A register to 0x20
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.get_flag("C"), true); // Carry set because A >= value
+    assert_eq!(cpu.get_flag("Z"), true);
+    assert_eq!(cpu.get_flag("N"), false);
+}
+
+#[test]
+fn test_cmp_zero_page_x() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xD5, 0x10]); // CMP zero page,X with address 0x10
+    cpu.register_x = 0x03; // Set X register to 0x03
+    cpu.mem_write(0x0013, 0x25); // Set value at address 0x13 (0x10 + 0x03) to 0x25
+    cpu.register_a = 0x30; // Set A register to 0x30
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.get_flag("C"), true); // Carry set because A >= value
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), false);
+}
+
+#[test]
+fn test_cmp_absolute() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xCD, 0x34, 0x12]); // CMP absolute with address 0x1234
+    cpu.mem_write(0x1234, 0x60); // Set value at address 0x1234 to 0x60
+    cpu.register_a = 0x70; // Set A register to 0x70
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.get_flag("C"), true); // Carry set because A >= value
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), false);
+}
+
+#[test]
+fn test_cmp_absolute_x() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xDD, 0x34, 0x12]); // CMP absolute,X with address 0x1234
+    cpu.register_x = 0x02; // Set X register to 0x02
+    cpu.mem_write(0x1236, 0x60); // Set value at address 0x1236 (0x1234 + 0x02) to 0x70
+    cpu.register_a = 0x60; // Set A register to 0x60
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.get_flag("C"), true); // Carry set because A >= value
+    assert_eq!(cpu.get_flag("Z"), true);
+    assert_eq!(cpu.get_flag("N"), false);
+}
+
+#[test]
+fn test_cmp_absolute_y() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xD9, 0x34, 0x12]); // CMP absolute,Y with address 0x1234
+    cpu.register_y = 0x01; // Set Y register to 0x01
+    cpu.mem_write(0x1235, 0x80); // Set value at address 0x1235 (0x1234 + 0x01) to 0x80
+    cpu.register_a = 0x90; // Set A register to 0x90
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.get_flag("C"), true); // Carry set because A >= value
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), true);
+}
+
+#[test]
+fn test_cmp_indirect_x() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xC1, 0x10]); // CMP indirect,X with address 0x10
+    cpu.register_x = 0x01; // Set X register to 0x01
+    cpu.mem_write(0x000F, 0x34); // Set low byte of address (0x10 - 0x01) to 0x34
+    cpu.mem_write(0x0010, 0x12); // Set high byte of address (0x10 - 0x01) to 0x12
+    cpu.mem_write(0x1234, 0x70); // Set value at address 0x1234 to 0x70
+    cpu.register_a = 0x60; // Set A register to 0x60
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.get_flag("C"), true); // Carry set because A >= value
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), false);
+}
+
+#[test]
+fn test_cmp_indirect_y() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xD1, 0x10]); // CMP indirect,Y with address 0x10
+    cpu.register_y = 0x02; // Set Y register to 0x02
+    cpu.mem_write(0x0010, 0x34); // Set low byte of address 0x10 to 0x34
+    cpu.mem_write(0x0011, 0x12); // Set high byte of address 0x10 to 0x12
+    cpu.mem_write(0x1236, 0x60); // Set value at address 0x1236 (0x1234 + 0x02) to 0x70
+    cpu.register_a = 0x60; // Set A register to 0x60
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.get_flag("C"), true); // Carry set because A >= value
+    assert_eq!(cpu.get_flag("Z"), true);
+    assert_eq!(cpu.get_flag("N"), false);
+}
+
+// CPY , CPX
+
+#[test]
+fn test_cpx_immediate() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xE0, 0x42]); // CPX immediate with value 0x42
+    cpu.register_x = 0x50; // Set X register to 0x50
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.get_flag("C"), true); // Carry set because X >= value
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), false);
+}
+
+#[test]
+fn test_cpx_zero_page() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xE4, 0x10]); // CPX zero page with address 0x10
+    cpu.mem_write(0x0010, 0x30); // Set value at address 0x10 to 0x30
+    cpu.register_x = 0x30; // Set X register to 0x20
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.get_flag("C"), true); // Carry set because X >= value
+    assert_eq!(cpu.get_flag("Z"), true);
+    assert_eq!(cpu.get_flag("N"), false);
+}
+
+#[test]
+fn test_cpx_absolute() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xEC, 0x34, 0x12]); // CPX absolute with address 0x1234
+    cpu.mem_write(0x1234, 0x60); // Set value at address 0x1234 to 0x60
+    cpu.register_x = 0x70; // Set X register to 0x70
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.get_flag("C"), true); // Carry set because X >= value
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), false);
+}
+
+#[test]
+fn test_cpy_immediate() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xC0, 0x42]); // CPY immediate with value 0x42
+    cpu.register_y = 0x50; // Set Y register to 0x50
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.get_flag("C"), true); // Carry set because Y >= value
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), false);
+}
+
+#[test]
+fn test_cpy_zero_page() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xC4, 0x10]); // CPY zero page with address 0x10
+    cpu.mem_write(0x0010, 0x30); // Set value at address 0x10 to 0x30
+    cpu.register_y = 0x30; // Set Y register to 0x20
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.get_flag("C"), true); // Carry set because Y >= value
+    assert_eq!(cpu.get_flag("Z"), true);
+    assert_eq!(cpu.get_flag("N"), false);
+}
+
+#[test]
+fn test_cpy_absolute() {
+    let mut cpu = Cpu::new();
+    cpu.load(&vec![0xCC, 0x34, 0x12]); // CPY absolute with address 0x1234
+    cpu.mem_write(0x1234, 0x60); // Set value at address 0x1234 to 0x60
+    cpu.register_y = 0x70; // Set Y register to 0x70
+    cpu.pc = 0x8000; // Set program counter
+    cpu.run();
+    assert_eq!(cpu.get_flag("C"), true); // Carry set because Y >= value
+    assert_eq!(cpu.get_flag("Z"), false);
+    assert_eq!(cpu.get_flag("N"), false);
+}
+
+// BEQ, BNE, BCC, BCS, BMI, BPL, BVC, BVS
