@@ -215,6 +215,25 @@ impl Cpu {
                     Opcode::new(0x24, String::from("BIT"), 2, 3, AddressingMode::ZeroPage),
                     Opcode::new(0x2C, String::from("BIT"), 3, 4, AddressingMode::Absolute),
                     Opcode::new(0xEA, String::from("NOP"), 3, 4, AddressingMode::NoneAddressing),
+
+                    // Arithmetic Operations Instructions
+                    Opcode::new(0x69, String::from("ADC"), 2, 2, AddressingMode::Immediate),
+                    Opcode::new(0x65, String::from("ADC"), 2, 3, AddressingMode::ZeroPage),
+                    Opcode::new(0x75, String::from("ADC"), 2, 4, AddressingMode::ZeroPage_X),
+                    Opcode::new(0x6D, String::from("ADC"), 3, 4, AddressingMode::Absolute),
+                    Opcode::new(0x7D, String::from("ADC"), 3, 4, AddressingMode::Absolute_X),
+                    Opcode::new(0x79, String::from("ADC"), 3, 4, AddressingMode::Absolute_Y),
+                    Opcode::new(0x61, String::from("ADC"), 2, 6, AddressingMode::Indirect_X),
+                    Opcode::new(0x71, String::from("ADC"), 2, 5, AddressingMode::Indirect_Y),
+
+                    Opcode::new(0xE9, String::from("SBC"), 2, 2, AddressingMode::Immediate),
+                    Opcode::new(0xE5, String::from("SBC"), 2, 3, AddressingMode::ZeroPage),
+                    Opcode::new(0xF5, String::from("SBC"), 2, 4, AddressingMode::ZeroPage_X),
+                    Opcode::new(0xED, String::from("SBC"), 3, 4, AddressingMode::Absolute),
+                    Opcode::new(0xFD, String::from("SBC"), 3, 4, AddressingMode::Absolute_X),
+                    Opcode::new(0xF9, String::from("SBC"), 3, 4, AddressingMode::Absolute_Y),
+                    Opcode::new(0xE1, String::from("SBC"), 2, 6, AddressingMode::Indirect_X),
+                    Opcode::new(0xF1, String::from("SBC"), 2, 5, AddressingMode::Indirect_Y),
                 ]
             },
         }
@@ -316,6 +335,10 @@ impl Cpu {
                 // Bit Instructions
                 0x24 | 0x2C => self.bit(opcode.mode),
                 0xEA => self.nop(),
+
+                // Arithmetics Instructions
+                0x69 | 0x65 | 0x75 | 0x6D | 0x7D | 0x79 | 0x61 | 0x71 => self.adc(opcode.mode),
+                0xE9 | 0xE5 | 0xF5 | 0xED | 0xFD | 0xF9 | 0xE1 | 0xF1 => self.sbc(opcode.mode),
 
                 _ => {
                     self.brk();

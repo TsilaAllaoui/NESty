@@ -661,7 +661,54 @@ impl Cpu {
     }
 
     pub fn nop(&mut self) {
-        self.pc += 1;
         self.cycles += 2;
+    }
+
+    /// ************** Arithmetics Instructions **************
+    ///
+    pub fn check_overflow(a: u8, b: u8, result: u8) -> bool {
+        // If both operands have the same sign and the result has a different sign,
+        // then overflow occurred.
+        let overflow = ((a & 0x80) == (b & 0x80)) && ((a & 0x80) != (result & 0x80));
+        overflow
+    }
+
+    pub fn adc(&mut self, mode: AddressingMode) {
+        let old_register_a = self.register_a;
+        let addr = self.get_operand_address(mode);
+        let carry = match self.get_flag("C") {
+            true => 1,
+            false => 0,
+        };
+        self.register_a = self.register_a.wrapping_add(self.mem_read(addr) + carry);
+        let tmp =
+            Self::check_overflow(old_register_a, self.mem_read(addr) + carry, self.register_a);
+        self.set_flag("C", tmp);
+        self.set_flag("Z", self.register_a == 0);
+        self.set_flag("N", self.register_a.bit(7));
+    }
+
+    pub fn check_overflow_sub(a: u8, b: u8, result: u8) -> bool {
+        // If the operands have different signs and the result has the same sign as the second operand,
+        // then overflow occurred.
+        let overflow = ((a & 0x80) != (b & 0x80)) && ((b & 0x80) == (result & 0x80));
+        overflow
+    }
+
+    pub fn sbc(&mut self, mode: AddressingMode) {
+        let old_register_a = self.register_a;
+        let addr = self.get_operand_address(mode);
+        let carry = match self.get_flag("C") {
+            true => 1,
+            false => 0,
+        };
+        self.register_a = self.register_a.wrapping_sub(self.mem_read(addr) + carry);
+        let tmp =
+            Self::check_overflow_sub(old_register_a, self.mem_read(addr) + carry, self.register_a);
+        if tmp {
+            self.set_flag("C", false);
+        }
+        self.set_flag("Z", self.register_a == 0);
+        self.set_flag("N", self.register_a.bit(7));
     }
 }
