@@ -42,8 +42,9 @@ impl Cpu {
             #[rustfmt::skip]
             opcodes: {
                 vec![
-                    // BRK
+                    // Interrupts
                     Opcode::new( 0x00, String::from("BRK"), 1, 7, AddressingMode::NoneAddressing),
+                    Opcode::new( 0x40, String::from("RTI"), 1, 6, AddressingMode::NoneAddressing),
 
                     // Decrements & Increments
                     Opcode::new(0xE6, String::from("INC"), 2, 5, AddressingMode::ZeroPage),
@@ -204,11 +205,16 @@ impl Cpu {
                     Opcode::new(0x50, String::from("BVC"), 2, 2, AddressingMode::NoneAddressing),
                     Opcode::new(0x70, String::from("BVS"), 2, 2, AddressingMode::NoneAddressing),
                 
-                    // Jumps & Subroutines
+                    // Jumps & Subroutines Insctructions
                     Opcode::new(0x4C, String::from("JMP"), 3, 3, AddressingMode::Absolute),
                     Opcode::new(0x6C, String::from("JMP"), 3, 5, AddressingMode::NoneAddressing),
-                    
                     Opcode::new(0x20, String::from("JSR"), 3, 6, AddressingMode::Absolute),
+                    Opcode::new(0x60, String::from("RTS"), 1, 6, AddressingMode::NoneAddressing),
+
+                    // Bit Insctructions
+                    Opcode::new(0x24, String::from("BIT"), 2, 3, AddressingMode::ZeroPage),
+                    Opcode::new(0x2C, String::from("BIT"), 3, 4, AddressingMode::Absolute),
+                    Opcode::new(0xEA, String::from("NOP"), 3, 4, AddressingMode::NoneAddressing),
                 ]
             },
         }
@@ -230,11 +236,12 @@ impl Cpu {
                 
 
             match opcode.code {
-                // BRK
+                // Interrutps
                 0x00 => {
                     self.brk();
                     break;
                 }
+                0x40 => self.rti(opcode.clone()),
 
                 // Transfer Instructions
                 0xAA => self.tax(),
@@ -305,6 +312,10 @@ impl Cpu {
                 0x4C | 0x6C => self.jmp(opcode.mode), 
                 0x20 => self.jsr(opcode.mode),
                 0x60 => self.rts(),
+
+                // Bit Instructions
+                0x24 | 0x2C => self.bit(opcode.mode),
+                0xEA => self.nop(),
 
                 _ => {
                     self.brk();

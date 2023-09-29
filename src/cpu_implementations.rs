@@ -1,6 +1,9 @@
 use bit::BitIndex;
 
-use crate::cpu::{AddressingMode, Cpu};
+use crate::{
+    cpu::{AddressingMode, Cpu},
+    opcode::Opcode,
+};
 
 impl Cpu {
     pub fn mem_read(&self, addr: u16) -> u8 {
@@ -635,5 +638,30 @@ impl Cpu {
     pub fn rts(&mut self) {
         self.pc = self.pull() as u16;
         self.cycles += 6;
+    }
+
+    /// ************** Interrupts Instructions **************
+    ///
+    pub fn rti(&mut self, opcode: Opcode) {
+        self.status = self.pull();
+        let lo = self.pull();
+        let hi = self.pull();
+        self.pc = (hi << 8) as u16 | lo as u16;
+        self.cycles += opcode.cycles as u16;
+    }
+
+    /// ************** BIT Instructions **************
+    ///
+    pub fn bit(&mut self, mode: AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let val = self.register_a & self.mem_read(addr);
+        self.mem_write(addr, val);
+        self.set_flag("N", val.bit(7));
+        self.set_flag("V", val.bit(6));
+    }
+
+    pub fn nop(&mut self) {
+        self.pc += 1;
+        self.cycles += 2;
     }
 }
