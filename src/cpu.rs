@@ -240,7 +240,13 @@ impl Cpu {
     }
 
     pub fn run(&mut self) {
+        self.run_with_callback(|_| {});
+    }
+
+    pub fn run_with_callback<F>(&mut self, mut callback: F)
+    where F: FnMut(&mut Cpu) {
         loop {
+            callback(self);
             let code = self.memory[self.pc as usize];
             self.pc += 1;
 
@@ -258,7 +264,7 @@ impl Cpu {
                 // Interrutps
                 0x00 => {
                     self.brk();
-                    break;
+                    // break;
                 }
                 0x40 => self.rti(opcode.clone()),
 

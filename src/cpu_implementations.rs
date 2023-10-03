@@ -32,11 +32,16 @@ impl Cpu {
         self.mem_write_16(0xFFFC, 0x8000);
     }
 
+    pub fn load_at(&mut self, program: &Vec<u8>, addr: u16) {
+        self.memory[addr.into()..(usize::from(addr) + program.len())].copy_from_slice(&program[..]);
+        self.mem_write_16(0xFFFC, addr);
+    }
+
     pub fn reset(&mut self) {
         self.register_a = 0;
         self.register_x = 0;
         self.register_y = 0;
-        self.register_s = 0xFF;
+        self.register_s = 0xFC;
         self.status = 0;
         self.pc = self.mem_read_16(0xFFFC);
     }
@@ -45,6 +50,12 @@ impl Cpu {
         self.load(program);
         self.reset();
         self.run();
+    }
+
+    pub fn load_at_and_run(&mut self, program: &Vec<u8>, addr: u16) {
+        self.load_at(program, addr);
+        self.reset();
+        self.run_with_callback(move |cpu| println!("{:?}", cpu.pc));
     }
 
     fn get_operand_address(&mut self, mode: AddressingMode) -> u16 {
@@ -388,23 +399,25 @@ impl Cpu {
 
     /// ************** Stacks instructions **************
     ///
-    pub fn push(&mut self, val: u8) {
-        self.mem_write(self.register_s as u16, val);
-        self.register_s -= 1;
+    pub fn push(&mut self, val: u16) {
+        self.mem_write(self.register_s as u16, (val & 0xff) as u8);
+        self.register_s = self.register_s.wrapping_sub(1);
+        self.mem_write(self.register_s as u16, ((val & 0xff00) >> 8) as u8);
+        self.register_s = self.register_s.wrapping_sub(1);
     }
 
     pub fn pull(&mut self) -> u8 {
-        self.register_s += 1;
+        self.register_s = self.register_s.wrapping_add(1);
         let val = self.mem_read(self.register_s as u16);
         val
     }
 
     pub fn pha(&mut self) {
-        self.push(self.register_a);
+        self.push(self.register_a as u16);
     }
 
     pub fn php(&mut self) {
-        self.push(self.status);
+        self.push(self.status as u16);
     }
 
     pub fn pla(&mut self) {
@@ -631,12 +644,14 @@ impl Cpu {
 
     pub fn jsr(&mut self, mode: AddressingMode) {
         let addr = self.get_operand_address(mode);
-        self.push(self.pc as u8);
-        self.pc = self.mem_read(addr) as u16;
+        self.push(self.pc - 1);
+        self.pc = addr as u16;
     }
 
     pub fn rts(&mut self) {
-        self.pc = self.pull() as u16;
+        let lo = self.pull() as u16;
+        let hi: u16 = self.pull() as u16;
+        self.pc = (lo << 8) as u16 | hi as u16;
         self.cycles += 6;
     }
 
@@ -646,7 +661,7 @@ impl Cpu {
         self.status = self.pull();
         let lo = self.pull();
         let hi = self.pull();
-        self.pc = (hi << 8) as u16 | lo as u16;
+        self.pc = (hi << 4) as u16 | lo as u16;
         self.cycles += opcode.cycles as u16;
     }
 
