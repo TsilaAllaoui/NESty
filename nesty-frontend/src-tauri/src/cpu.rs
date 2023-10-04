@@ -1,7 +1,10 @@
+use std::sync::Arc;
+
 use crate::opcode::Opcode;
 use serde::{Serialize, Serializer, ser::SerializeStruct};
+use tauri::Window;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Cpu {
     pub register_a: u8,
     pub register_x: u8,
@@ -12,9 +15,10 @@ pub struct Cpu {
     pub opcodes: Vec<Opcode>,
     pub cycles: u16,
     pub memory: [u8; 0xFFFF],
+    pub window: Option<Arc<Window>>
 }
 
-impl Serialize for Cpu {
+impl Serialize for CpuSerialized {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -45,6 +49,18 @@ pub enum AddressingMode {
     NoneAddressing,
 }
 
+#[derive(Clone)]
+pub struct CpuSerialized {
+    pub register_a: u8,
+    pub register_x: u8,
+    pub register_y: u8,
+    pub register_s: u8,
+    pub status: u8,
+    pub pc: u16,
+    pub cycles: u16,
+    pub memory: [u8;0xFFFF]
+}
+
 impl Cpu {
     pub fn new() -> Self {
         Cpu {
@@ -56,6 +72,8 @@ impl Cpu {
             pc: 0,
             cycles: 0,
             memory: [0; 0xFFFF],
+            window: None,
+
             #[rustfmt::skip]
             opcodes: {
                 vec![
@@ -260,6 +278,19 @@ impl Cpu {
         self.run_with_callback(|_| {});
     }
 
+    pub fn serialize(&self) -> CpuSerialized {
+        CpuSerialized {
+            pc: self.pc,
+            register_a: self.register_a,
+            register_x: self.register_x,
+            register_y: self.register_y,
+            register_s: self.register_s,
+            status: self.status,
+            cycles: self.cycles,
+            memory: self.memory
+        }
+    }
+
     pub fn run_with_callback<F>(&mut self, mut callback: F)
     where F: FnMut(&mut Cpu) {
         loop {
@@ -367,6 +398,12 @@ impl Cpu {
                     self.brk();
                     break;
                 }
+            }
+
+            if let Some(window) = &self.window {
+                let _ = window.emit("cpu-update", 
+                     self.serialize(),
+                );
             }
         }
     }

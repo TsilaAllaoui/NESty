@@ -3,7 +3,8 @@ import { GlobalStyle } from "./components/globaStyles";
 import { theme } from "./components/theme";
 import Register from "./components/Register";
 import { useEffect, useState } from "react";
-import { emit, listen } from "@tauri-apps/api/event";
+import { listen } from "@tauri-apps/api/event";
+import { appWindow } from "@tauri-apps/api/window";
 
 const StyledApp = styled.div`
   width: 400px;
@@ -101,7 +102,7 @@ export interface IMemoryCell {
   value: number;
 }
 
-async function App() {
+function App() {
   const registers: IRegister[] = [
     { name: "A", value: "0x00" },
     { name: "X", value: "0x00" },
@@ -111,12 +112,12 @@ async function App() {
     { name: "Status Flags", value: "00000000" },
   ];
 
-  const listenCpuUpdate = await listen("cpu-update", async (event) => {
-    console.log(event.payload);
-  });
-
   const [stack, setStack] = useState<IMemoryCell[]>([]);
   useEffect(() => {
+    appWindow.listen("cpu-update", async (event) => {
+      console.log(event.payload);
+    });
+
     let s = [];
     for (let i = 0xff; i >= 0; i--) {
       s.push({ address: i, value: 0 });
